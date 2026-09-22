@@ -109,8 +109,10 @@ class DashboardTest extends TestCase
         $response->assertSee('Data Barang');
         $response->assertSee('BOM / Komposisi');
         $response->assertSee('Laporan Penjualan');
-        // Modul B
+        // Modul B. "Jalankan Simulasi" tidak dicek: sejak RBAC diterapkan
+        // (2026-09-22), menu itu cuma tampil untuk Pimpinan, pengguna di sini
+        // admin yang cuma "lihat saja" (docs/01-alur-kerja-sistem.md §10).
         $response->assertSee('Proses Forecasting');
-        $response->assertSee('Jalankan Simulasi');
+        $response->assertSee('Perbandingan Skenario');
     }
 }

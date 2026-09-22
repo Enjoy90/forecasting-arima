@@ -5,16 +5,18 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Transaksi Penjualan</h2>
                 <p class="text-sm text-gray-500 mt-0.5">Sumber data deret waktu yang diramalkan ARIMA.</p>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('penjualan.import.form') }}"
-                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
-                    Import Excel
-                </a>
-                <a href="{{ route('penjualan.faktur.create') }}"
-                   class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                    + Faktur Baru
-                </a>
-            </div>
+            @if (auth()->user()?->role === 'admin')
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('penjualan.import.form') }}"
+                       class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                        Import Excel
+                    </a>
+                    <a href="{{ route('penjualan.faktur.create') }}"
+                       class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                        + Faktur Baru
+                    </a>
+                </div>
+            @endif
         </div>
     </x-slot>
 

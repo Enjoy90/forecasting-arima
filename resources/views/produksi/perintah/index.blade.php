@@ -8,10 +8,12 @@
                     waktu proses {{ rtrim(rtrim(number_format((float) $tahapan->waktu_proses_hari, 2, ',', '.'), '0'), ',') }} hari
                 </p>
             </div>
-            <a href="{{ route('produksi.perintah.create', $tahapan->kode_tahapan) }}"
-               class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                + Perintah Baru
-            </a>
+            @if (in_array(auth()->user()?->role, ['admin', 'produksi'], true))
+                <a href="{{ route('produksi.perintah.create', $tahapan->kode_tahapan) }}"
+                   class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    + Perintah Baru
+                </a>
+            @endif
         </div>
     </x-slot>
 

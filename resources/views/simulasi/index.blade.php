@@ -5,10 +5,12 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Simulasi &amp; Pengujian</h2>
                 <p class="text-sm text-gray-500 mt-0.5">Uji rencana stok dengan data masa lalu (backtesting) -- tolak ukur utama keberhasilan sistem.</p>
             </div>
-            <a href="{{ route('simulasi.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                Jalankan Simulasi Baru
-            </a>
+            @if (auth()->user()?->role === 'pimpinan')
+                <a href="{{ route('simulasi.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    Jalankan Simulasi Baru
+                </a>
+            @endif
         </div>
     </x-slot>
 

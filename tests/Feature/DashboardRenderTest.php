@@ -30,10 +30,12 @@ class DashboardRenderTest extends TestCase
         $response->assertSee('BOM / Komposisi');
         $response->assertSee('Mutasi Stok');
 
-        // menu milik Modul B
+        // menu milik Modul B. "Jalankan Simulasi" tidak dicek di sini: sejak
+        // RBAC diterapkan (2026-09-22), menu itu cuma tampil untuk Pimpinan,
+        // admin cuma "lihat saja" (docs/01-alur-kerja-sistem.md §10).
         $response->assertSee('Proses Forecasting');
         $response->assertSee('Target Produksi');
-        $response->assertSee('Jalankan Simulasi');
+        $response->assertSee('Perbandingan Skenario');
     }
 
     public function test_pengguna_nonaktif_ditolak_middleware_role(): void

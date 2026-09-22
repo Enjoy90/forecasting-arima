@@ -60,13 +60,18 @@
         @endif
 
         <p class="px-3 pt-3 pb-1 text-xs font-medium text-gray-500 uppercase tracking-wide">Produksi</p>
-        <a href="{{ route('produksi.bom.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('produksi.bom.*')])>BOM / Komposisi</a>
+        {{-- BOM: admin & produksi penuh, pimpinan lihat saja, gudang tidak boleh akses. --}}
+        @if (in_array($role, ['admin', 'produksi', 'pimpinan'], true))
+            <a href="{{ route('produksi.bom.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('produksi.bom.*')])>BOM / Komposisi</a>
+        @endif
 
         {{--
             Menu tahapan dibangkitkan dari master Tahapan Produksi, bukan ditulis
             satu per satu. Dengan begitu menambah atau mengganti nama tahapan
             cukup dilakukan lewat halaman master, tanpa menyentuh berkas ini.
+            Keempat role setidaknya bisa lihat (admin & produksi penuh, gudang
+            & pimpinan lihat saja), jadi menu ini tidak digate per role.
         --}}
         @foreach (\App\Models\TahapanProduksi::where('is_aktif', true)->orderBy('urutan')->get() as $tahapanMenu)
             <a href="{{ route('produksi.perintah.index', $tahapanMenu->kode_tahapan) }}"
@@ -77,6 +82,7 @@
                ])>{{ $tahapanMenu->nama_tahapan }}</a>
         @endforeach
 
+        {{-- Persediaan: keempat role setidaknya bisa lihat (admin & gudang penuh, produksi & pimpinan lihat saja). --}}
         <p class="px-3 pt-3 pb-1 text-xs font-medium text-gray-500 uppercase tracking-wide">Persediaan</p>
         <a href="{{ route('persediaan.stok') }}"
            @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('persediaan.stok')])>Stok Saat Ini</a>
@@ -85,11 +91,16 @@
         <a href="{{ route('persediaan.opname.index') }}"
            @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('persediaan.opname.*')])>Stok Opname</a>
 
-        <p class="px-3 pt-3 pb-1 text-xs font-medium text-gray-500 uppercase tracking-wide">Penjualan</p>
-        <a href="{{ route('penjualan.faktur.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('penjualan.faktur.*')])>Transaksi Penjualan</a>
-        <a href="{{ route('penjualan.import.form') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('penjualan.import.*')])>Import Penjualan</a>
+        {{-- Penjualan: admin penuh, pimpinan lihat saja, produksi & gudang tidak boleh akses. --}}
+        @if (in_array($role, ['admin', 'pimpinan'], true))
+            <p class="px-3 pt-3 pb-1 text-xs font-medium text-gray-500 uppercase tracking-wide">Penjualan</p>
+            <a href="{{ route('penjualan.faktur.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('penjualan.faktur.*')])>Transaksi Penjualan</a>
+            @if ($role === 'admin')
+                <a href="{{ route('penjualan.import.form') }}"
+                   @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('penjualan.import.*')])>Import Penjualan</a>
+            @endif
+        @endif
     </div>
 </div>
 

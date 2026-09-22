@@ -38,7 +38,7 @@
                 </div>
             </form>
 
-            @if ($barang)
+            @if ($barang && auth()->user()?->role === 'pimpinan')
                 <form method="POST" action="{{ route('peramalan.historis.agregasi') }}" class="mt-4">
                     @csrf
                     <input type="hidden" name="barang_id" value="{{ $barang->id }}">

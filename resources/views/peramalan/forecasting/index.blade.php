@@ -27,39 +27,41 @@
             </div>
         @endif
 
-        <div class="bg-white shadow-sm sm:rounded-lg p-6">
-            <h3 class="text-sm font-semibold text-gray-900">Jalankan Peramalan Baru</h3>
+        @if (auth()->user()?->role === 'pimpinan')
+            <div class="bg-white shadow-sm sm:rounded-lg p-6">
+                <h3 class="text-sm font-semibold text-gray-900">Jalankan Peramalan Baru</h3>
 
-            @if ($daftarBarang->isEmpty())
-                <p class="mt-2 text-sm text-gray-500">Belum ada barang jadi yang ditandai "diramalkan".</p>
-            @else
-                <form method="POST" action="{{ route('peramalan.forecasting.proses') }}" class="mt-3 flex flex-wrap items-end gap-3">
-                    @csrf
-                    <div>
-                        <x-input-label for="barang_id" value="Barang Jadi" />
-                        <select id="barang_id" name="barang_id" required
-                                class="mt-1 text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                            @foreach ($daftarBarang as $b)
-                                <option value="{{ $b->id }}" @selected(old('barang_id') == $b->id)>
-                                    {{ $b->kode_barang }} - {{ $b->nama_barang }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                @if ($daftarBarang->isEmpty())
+                    <p class="mt-2 text-sm text-gray-500">Belum ada barang jadi yang ditandai "diramalkan".</p>
+                @else
+                    <form method="POST" action="{{ route('peramalan.forecasting.proses') }}" class="mt-3 flex flex-wrap items-end gap-3">
+                        @csrf
+                        <div>
+                            <x-input-label for="barang_id" value="Barang Jadi" />
+                            <select id="barang_id" name="barang_id" required
+                                    class="mt-1 text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                @foreach ($daftarBarang as $b)
+                                    <option value="{{ $b->id }}" @selected(old('barang_id') == $b->id)>
+                                        {{ $b->kode_barang }} - {{ $b->nama_barang }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div>
-                        <x-input-label for="horizon" value="Horizon (bulan)" />
-                        <x-text-input id="horizon" name="horizon" type="number" min="1" max="12"
-                                      value="{{ old('horizon', 6) }}" class="mt-1 w-24 text-sm" required />
-                    </div>
+                        <div>
+                            <x-input-label for="horizon" value="Horizon (bulan)" />
+                            <x-text-input id="horizon" name="horizon" type="number" min="1" max="12"
+                                          value="{{ old('horizon', 6) }}" class="mt-1 w-24 text-sm" required />
+                        </div>
 
-                    <x-primary-button>Jalankan Peramalan</x-primary-button>
-                </form>
-                <p class="mt-2 text-xs text-gray-500">
-                    Data historis barang harus sudah dibangun lebih dulu di menu Data Historis, minimal 24 periode.
-                </p>
-            @endif
-        </div>
+                        <x-primary-button>Jalankan Peramalan</x-primary-button>
+                    </form>
+                    <p class="mt-2 text-xs text-gray-500">
+                        Data historis barang harus sudah dibangun lebih dulu di menu Data Historis, minimal 24 periode.
+                    </p>
+                @endif
+            </div>
+        @endif
 
         <div class="bg-white shadow-sm sm:rounded-lg">
             <div class="px-4 py-4 border-b border-gray-200">

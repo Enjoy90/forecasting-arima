@@ -124,48 +124,87 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // -----------------------------------------------------------------
     // PRODUKSI
+    //
+    // Hak akses: BOM -> admin & produksi penuh, pimpinan lihat saja, gudang
+    // tidak boleh akses. Perintah (5 tahap) -> admin & produksi penuh,
+    // gudang & pimpinan lihat saja. Sama seperti Master Data/Pembelian,
+    // grup "tulis" (punya rute literal /create) wajib didaftar sebelum
+    // grup "baca" (punya rute /{id} buat show).
     // -----------------------------------------------------------------
     Route::prefix('produksi')->name('produksi.')->group(function () {
-        Route::resource('bom', BomController::class);
+        Route::middleware('role:admin,produksi')->group(function () {
+            Route::resource('bom', BomController::class)->except(['index', 'show']);
+        });
+
+        Route::middleware('role:admin,produksi,pimpinan')->group(function () {
+            Route::resource('bom', BomController::class)->only(['index', 'show']);
+        });
 
         // Lima menu tahapan memakai SATU controller yang sama, dibedakan oleh
         // parameter {tahapan} yang diikat ke kolom kode_tahapan (lihat Route::bind
         // di bawah berkas ini). Menambah tahapan cukup lewat master Tahapan
         // Produksi — tidak perlu menyentuh kode maupun route.
-        Route::prefix('perintah/{tahapan}')->name('perintah.')->group(function () {
-            Route::post('{perintah}/mulai', [ProduksiController::class, 'mulai'])->name('mulai');
-            Route::post('{perintah}/realisasi', [ProduksiController::class, 'realisasi'])->name('realisasi');
-            Route::post('{perintah}/selesaikan', [ProduksiController::class, 'selesaikan'])->name('selesaikan');
-            Route::post('{perintah}/batal', [ProduksiController::class, 'batal'])->name('batal');
+        Route::middleware('role:admin,produksi')->group(function () {
+            Route::prefix('perintah/{tahapan}')->name('perintah.')->group(function () {
+                Route::post('{perintah}/mulai', [ProduksiController::class, 'mulai'])->name('mulai');
+                Route::post('{perintah}/realisasi', [ProduksiController::class, 'realisasi'])->name('realisasi');
+                Route::post('{perintah}/selesaikan', [ProduksiController::class, 'selesaikan'])->name('selesaikan');
+                Route::post('{perintah}/batal', [ProduksiController::class, 'batal'])->name('batal');
+            });
+
+            Route::resource('perintah/{tahapan}', ProduksiController::class)
+                ->parameters(['{tahapan}' => 'perintah'])
+                ->names('perintah')
+                ->except(['index', 'show']);
         });
 
-        Route::resource('perintah/{tahapan}', ProduksiController::class)
-            ->parameters(['{tahapan}' => 'perintah'])
-            ->names('perintah');
+        Route::middleware('role:admin,produksi,gudang,pimpinan')->group(function () {
+            Route::resource('perintah/{tahapan}', ProduksiController::class)
+                ->parameters(['{tahapan}' => 'perintah'])
+                ->names('perintah')
+                ->only(['index', 'show']);
+        });
     });
 
     // -----------------------------------------------------------------
     // PERSEDIAAN
+    //
+    // Hak akses: admin & gudang penuh (termasuk mencatat opname), produksi
+    // & pimpinan lihat saja.
     // -----------------------------------------------------------------
     Route::prefix('persediaan')->name('persediaan.')->group(function () {
-        Route::get('stok', [StokController::class, 'index'])->name('stok');
-        Route::get('mutasi', [MutasiStokController::class, 'index'])->name('mutasi');
+        Route::middleware('role:admin,gudang')->group(function () {
+            // Hanya create/store: catatan opname tidak boleh diubah atau
+            // dihapus. Salah hitung diperbaiki dengan mencatat opname baru.
+            Route::resource('opname', OpnameController::class)->only(['create', 'store']);
+        });
 
-        // Hanya index/create/store: catatan opname tidak boleh diubah atau
-        // dihapus. Salah hitung diperbaiki dengan mencatat opname baru.
-        Route::resource('opname', OpnameController::class)->only(['index', 'create', 'store']);
+        Route::middleware('role:admin,gudang,produksi,pimpinan')->group(function () {
+            Route::get('stok', [StokController::class, 'index'])->name('stok');
+            Route::get('mutasi', [MutasiStokController::class, 'index'])->name('mutasi');
+            Route::resource('opname', OpnameController::class)->only(['index']);
+        });
     });
 
     // -----------------------------------------------------------------
     // PENJUALAN
+    //
+    // Hak akses: admin penuh, pimpinan lihat saja, produksi & gudang tidak
+    // boleh akses sama sekali.
     // -----------------------------------------------------------------
     Route::prefix('penjualan')->name('penjualan.')->group(function () {
-        Route::resource('faktur', PenjualanController::class);
+        Route::middleware('role:admin')->group(function () {
+            Route::resource('faktur', PenjualanController::class)->except(['index', 'show']);
 
-        // Import Excel: jalan masuk data penjualan masa lalu untuk bahan ARIMA.
-        Route::get('import', [ImportPenjualanController::class, 'form'])->name('import.form');
-        Route::get('import/template', [ImportPenjualanController::class, 'template'])->name('import.template');
-        Route::post('import', [ImportPenjualanController::class, 'store'])->name('import.store');
+            // Import Excel: jalan masuk data penjualan masa lalu untuk bahan ARIMA.
+            Route::get('import', [ImportPenjualanController::class, 'form'])->name('import.form');
+            Route::get('import/template', [ImportPenjualanController::class, 'template'])->name('import.template');
+            Route::post('import', [ImportPenjualanController::class, 'store'])->name('import.store');
+        });
+
+        Route::middleware('role:admin,pimpinan')->group(function () {
+            Route::resource('faktur', PenjualanController::class)->only(['index', 'show']);
+        });
     });
 
     // -----------------------------------------------------------------

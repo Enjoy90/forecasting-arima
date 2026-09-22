@@ -45,7 +45,7 @@
                 </div>
             </form>
 
-            @if ($barangId)
+            @if ($barangId && auth()->user()?->role === 'pimpinan')
                 @if ($periodeForecast->isEmpty())
                     <p class="mt-3 text-sm text-gray-500">Belum ada hasil forecast untuk barang ini. Jalankan Proses Forecasting dulu.</p>
                 @else
@@ -71,7 +71,7 @@
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <div class="flex items-center justify-between">
                     <h3 class="text-sm font-semibold text-gray-900">{{ $detail->barang->nama_barang }} - {{ $detail->periode }}</h3>
-                    @if ($detail->status_approval === 'menunggu' && $detail->jumlah_target_produksi > 0)
+                    @if ($detail->status_approval === 'menunggu' && $detail->jumlah_target_produksi > 0 && auth()->user()?->role === 'pimpinan')
                         <form method="POST" action="{{ route('peramalan.target.setujui', $detail) }}">
                             @csrf
                             @method('PATCH')

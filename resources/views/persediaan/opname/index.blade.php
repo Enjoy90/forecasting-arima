@@ -5,10 +5,12 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Stok Opname</h2>
                 <p class="text-sm text-gray-500 mt-0.5">Riwayat penyesuaian stok terhadap hasil hitung fisik gudang.</p>
             </div>
-            <a href="{{ route('persediaan.opname.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                + Opname Baru
-            </a>
+            @if (in_array(auth()->user()?->role, ['admin', 'gudang'], true))
+                <a href="{{ route('persediaan.opname.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    + Opname Baru
+                </a>
+            @endif
         </div>
     </x-slot>
 

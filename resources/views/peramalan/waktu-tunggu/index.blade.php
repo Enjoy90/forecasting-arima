@@ -21,37 +21,39 @@
             </div>
         @endif
 
-        <div class="bg-white shadow-sm sm:rounded-lg p-6">
-            @if ($daftarBarang->isEmpty())
-                <p class="text-sm text-gray-500">Belum ada barang jadi yang ditandai "diramalkan".</p>
-            @else
-                <form method="POST" action="{{ route('peramalan.waktu-tunggu.hitung') }}" class="flex flex-wrap items-end gap-3">
-                    @csrf
-                    <div>
-                        <x-input-label for="barang_id" value="Barang Jadi" />
-                        <select id="barang_id" name="barang_id" required
-                                class="mt-1 text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                            @foreach ($daftarBarang as $b)
-                                <option value="{{ $b->id }}" @selected(old('barang_id') == $b->id)>
-                                    {{ $b->kode_barang }} - {{ $b->nama_barang }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <x-input-label for="jumlah_target" value="Jumlah Target" />
-                        <x-text-input id="jumlah_target" name="jumlah_target" type="number" step="0.01" min="0.01"
-                                      value="{{ old('jumlah_target') }}" class="mt-1 w-32 text-sm" required />
-                    </div>
-                    <div>
-                        <x-input-label for="awal_periode" value="Awal Periode Penjualan" />
-                        <x-text-input id="awal_periode" name="awal_periode" type="date"
-                                      value="{{ old('awal_periode') }}" class="mt-1 text-sm" required />
-                    </div>
-                    <x-primary-button>Hitung</x-primary-button>
-                </form>
-            @endif
-        </div>
+        @if (auth()->user()?->role === 'pimpinan')
+            <div class="bg-white shadow-sm sm:rounded-lg p-6">
+                @if ($daftarBarang->isEmpty())
+                    <p class="text-sm text-gray-500">Belum ada barang jadi yang ditandai "diramalkan".</p>
+                @else
+                    <form method="POST" action="{{ route('peramalan.waktu-tunggu.hitung') }}" class="flex flex-wrap items-end gap-3">
+                        @csrf
+                        <div>
+                            <x-input-label for="barang_id" value="Barang Jadi" />
+                            <select id="barang_id" name="barang_id" required
+                                    class="mt-1 text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                @foreach ($daftarBarang as $b)
+                                    <option value="{{ $b->id }}" @selected(old('barang_id') == $b->id)>
+                                        {{ $b->kode_barang }} - {{ $b->nama_barang }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <x-input-label for="jumlah_target" value="Jumlah Target" />
+                            <x-text-input id="jumlah_target" name="jumlah_target" type="number" step="0.01" min="0.01"
+                                          value="{{ old('jumlah_target') }}" class="mt-1 w-32 text-sm" required />
+                        </div>
+                        <div>
+                            <x-input-label for="awal_periode" value="Awal Periode Penjualan" />
+                            <x-text-input id="awal_periode" name="awal_periode" type="date"
+                                          value="{{ old('awal_periode') }}" class="mt-1 text-sm" required />
+                        </div>
+                        <x-primary-button>Hitung</x-primary-button>
+                    </form>
+                @endif
+            </div>
+        @endif
 
         @if (session('hasil'))
             @php $hasil = session('hasil'); @endphp

@@ -5,10 +5,12 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">BOM / Komposisi</h2>
                 <p class="text-sm text-gray-500 mt-0.5">Resep bahan untuk tiap barang pada tiap tahapan produksi.</p>
             </div>
-            <a href="{{ route('produksi.bom.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                + Resep Baru
-            </a>
+            @if (in_array(auth()->user()?->role, ['admin', 'produksi'], true))
+                <a href="{{ route('produksi.bom.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    + Resep Baru
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -89,21 +91,23 @@
                                     ])>{{ $item->is_aktif ? 'Aktif' : 'Nonaktif' }}</span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center justify-end gap-3">
-                                        <a href="{{ route('produksi.bom.edit', $item) }}" class="text-indigo-600 hover:text-indigo-800">Ubah</a>
+                                    @if (in_array(auth()->user()?->role, ['admin', 'produksi'], true))
+                                        <div class="flex items-center justify-end gap-3">
+                                            <a href="{{ route('produksi.bom.edit', $item) }}" class="text-indigo-600 hover:text-indigo-800">Ubah</a>
 
-                                        <form method="POST" action="{{ route('produksi.bom.destroy', $item) }}"
-                                              onsubmit="return confirm('Hapus resep {{ $item->nama_bom }}?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" @disabled($item->produksi_count > 0)
-                                                    @class([
-                                                        'text-red-600 hover:text-red-800' => $item->produksi_count === 0,
-                                                        'text-gray-300 cursor-not-allowed' => $item->produksi_count > 0,
-                                                    ])
-                                                    title="{{ $item->produksi_count > 0 ? 'Sudah dipakai perintah produksi — nonaktifkan saja' : 'Hapus resep' }}">Hapus</button>
-                                        </form>
-                                    </div>
+                                            <form method="POST" action="{{ route('produksi.bom.destroy', $item) }}"
+                                                  onsubmit="return confirm('Hapus resep {{ $item->nama_bom }}?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" @disabled($item->produksi_count > 0)
+                                                        @class([
+                                                            'text-red-600 hover:text-red-800' => $item->produksi_count === 0,
+                                                            'text-gray-300 cursor-not-allowed' => $item->produksi_count > 0,
+                                                        ])
+                                                        title="{{ $item->produksi_count > 0 ? 'Sudah dipakai perintah produksi — nonaktifkan saja' : 'Hapus resep' }}">Hapus</button>
+                                            </form>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

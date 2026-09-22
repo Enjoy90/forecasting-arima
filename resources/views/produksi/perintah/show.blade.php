@@ -94,8 +94,10 @@
             </div>
         @endif
 
+        @php $bolehTulis = in_array(auth()->user()?->role, ['admin', 'produksi'], true); @endphp
+
         {{-- Bahan --}}
-        @if ($produksi->status === 'proses')
+        @if ($produksi->status === 'proses' && $bolehTulis)
             <form method="POST" action="{{ route('produksi.perintah.realisasi', [$tahapan->kode_tahapan, $produksi]) }}">
                 @csrf
 
@@ -234,9 +236,14 @@
             </div>
         @endif
 
-        {{-- Tindakan --}}
+        {{-- Tindakan: memulai/menyelesaikan/membatalkan/menghapus perintah, hanya admin & produksi. --}}
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
-            @if ($produksi->status === 'draft')
+            @if (! $bolehTulis)
+                <p class="text-sm text-gray-600">
+                    Perintah berstatus <strong>{{ $daftarStatus[$produksi->status] ?? $produksi->status }}</strong>.
+                    Mengubah status perintah adalah wewenang admin dan staf produksi.
+                </p>
+            @elseif ($produksi->status === 'draft')
                 <h3 class="text-sm font-semibold text-gray-900">Mulai Pekerjaan</h3>
                 <p class="mt-1 text-sm text-gray-600">
                     Setelah dimulai, perintah tidak dapat diubah lagi dan staf dapat mencatat realisasinya.

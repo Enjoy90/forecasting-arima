@@ -89,18 +89,22 @@
         </div>
 
         <div class="bg-white shadow-sm sm:rounded-lg p-6 flex flex-wrap items-center gap-4">
-            <a href="{{ route('penjualan.faktur.edit', $penjualan) }}"
-               class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Ubah keterangan faktur</a>
+            @if (auth()->user()?->role === 'admin')
+                <a href="{{ route('penjualan.faktur.edit', $penjualan) }}"
+                   class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Ubah keterangan faktur</a>
+            @endif
 
             <a href="{{ route('persediaan.mutasi', ['sumber' => 'penjualan']) }}"
                class="text-sm font-medium text-gray-600 hover:text-gray-900">Lihat mutasi stok</a>
 
-            <form method="POST" action="{{ route('penjualan.faktur.destroy', $penjualan) }}" class="ms-auto"
-                  onsubmit="return confirm('Hapus faktur {{ $penjualan->no_faktur }}? Stok barangnya akan dikembalikan lewat mutasi pengimbang.')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800">Hapus faktur</button>
-            </form>
+            @if (auth()->user()?->role === 'admin')
+                <form method="POST" action="{{ route('penjualan.faktur.destroy', $penjualan) }}" class="ms-auto"
+                      onsubmit="return confirm('Hapus faktur {{ $penjualan->no_faktur }}? Stok barangnya akan dikembalikan lewat mutasi pengimbang.')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800">Hapus faktur</button>
+                </form>
+            @endif
         </div>
     </div>
 </x-app-layout>
