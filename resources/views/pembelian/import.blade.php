@@ -9,7 +9,7 @@
         </div>
     </x-slot>
 
-    <div class="max-w-3xl space-y-4">
+    <div class="w-full space-y-4">
         @if (session('gagal'))
             <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                 <p class="font-medium">{{ session('gagal') }}</p>

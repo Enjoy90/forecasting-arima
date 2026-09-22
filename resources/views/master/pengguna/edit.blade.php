@@ -3,7 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">Ubah Pengguna {{ $pengguna->name }}</h2>
     </x-slot>
 
-    <div class="max-w-3xl">
+    <div class="w-full">
         @if ($pengguna->id === auth()->id())
             <div class="mb-4 rounded-md border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
                 Ini akun Anda sendiri. Role dan statusnya tidak dapat diubah dari sini, sebagai penjaga agar

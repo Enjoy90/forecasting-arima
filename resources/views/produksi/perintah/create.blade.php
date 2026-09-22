@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="max-w-3xl">
+    <div class="w-full">
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
             <div class="mb-5 rounded-md border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
                 Membuat perintah <strong>belum menyentuh stok</strong>. Sistem hanya menyalin kebutuhan bahan

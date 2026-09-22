@@ -8,7 +8,7 @@
         </div>
     </x-slot>
 
-    <div class="max-w-7xl">
+    <div class="w-full">
         <div class="mb-4 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
             Hanya menampilkan order yang <strong>sudah diterima</strong>. Order yang masih dipesan atau dibatalkan
             belum mewujud menjadi pengadaan bahan.

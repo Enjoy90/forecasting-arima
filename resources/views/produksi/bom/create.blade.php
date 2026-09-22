@@ -3,7 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">Resep BOM Baru</h2>
     </x-slot>
 
-    <div class="max-w-5xl">
+    <div class="w-full">
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
             <form method="POST" action="{{ route('produksi.bom.store') }}">
                 @csrf

@@ -3,7 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">Ubah Faktur {{ $penjualan->no_faktur }}</h2>
     </x-slot>
 
-    <div class="max-w-3xl">
+    <div class="w-full">
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
             <div class="mb-5 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                 Hanya keterangan faktur yang dapat diubah. <strong>Baris barang tidak dapat disunting</strong>

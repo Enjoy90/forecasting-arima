@@ -12,7 +12,7 @@
         </div>
     </x-slot>
 
-    <div class="max-w-7xl">
+    <div class="w-full">
         <div class="mb-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white shadow-sm sm:rounded-lg p-4">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Barang Aktif</p>

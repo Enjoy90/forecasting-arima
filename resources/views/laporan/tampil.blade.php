@@ -31,7 +31,7 @@
         </div>
     </x-slot>
 
-    <div class="max-w-7xl space-y-4">
+    <div class="w-full space-y-4">
         {{-- Penyaring --}}
         <div class="bg-white shadow-sm sm:rounded-lg px-4 py-4">
             <form method="GET" action="{{ route($rute) }}" class="flex flex-wrap items-end gap-3">

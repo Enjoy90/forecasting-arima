@@ -3,7 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">Faktur Penjualan Baru</h2>
     </x-slot>
 
-    <div class="max-w-5xl">
+    <div class="w-full">
         @if (session('gagal'))
             <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ session('gagal') }}</div>
         @endif

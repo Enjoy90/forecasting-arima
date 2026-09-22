@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="max-w-5xl">
+    <div class="w-full">
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
             <form method="POST" action="{{ route('pembelian.order.update', $pembelian) }}">
                 @csrf

@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="max-w-3xl">
+    <div class="w-full">
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
             <div class="mb-5 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                 Mengubah resep atau jumlah target akan <strong>menghitung ulang rencana bahan</strong> dari awal.

@@ -6,7 +6,7 @@
         </div>
     </x-slot>
 
-    <div class="max-w-7xl">
+    <div class="w-full">
         <div class="mb-4 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
             Catatan mutasi tidak dapat diubah maupun dihapus. Bila ada angka yang keliru, perbaiki lewat
             <a href="{{ route('persediaan.opname.create') }}" class="font-medium text-indigo-600 hover:text-indigo-800">Stok Opname</a>

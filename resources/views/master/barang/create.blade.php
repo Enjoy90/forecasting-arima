@@ -3,7 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">Tambah Barang</h2>
     </x-slot>
 
-    <div class="max-w-4xl">
+    <div class="w-full">
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
             <div class="mb-5 rounded-md border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
                 Barang baru selalu dimulai dengan <strong>stok 0</strong>. Saldo awal dimasukkan lewat

@@ -3,7 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">Ubah Resep {{ $bom->kode_bom }}</h2>
     </x-slot>
 
-    <div class="max-w-5xl">
+    <div class="w-full">
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
             <div class="mb-5 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                 Perubahan resep <strong>tidak mengubah perintah produksi yang sudah dibuat</strong>. Setiap
