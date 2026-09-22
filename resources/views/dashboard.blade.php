@@ -94,9 +94,22 @@
 
                 $garisPoin = $titikSvg->map(fn ($p) => "{$p['x']},{$p['y']}")->implode(' ');
                 $areaPoin = "{$margin},{$tinggiSvg} {$garisPoin} " . ($lebarSvg - $margin) . ",{$tinggiSvg}";
+
+                // Lebar kotak tooltip dalam satuan viewBox, disesuaikan dengan
+                // panjang teks (label + angka) supaya tidak kepotong atau
+                // kelonggaran. Posisi x dijepit ke dalam batas SVG supaya
+                // kotaknya tidak terpotong di titik paling kiri/kanan.
+                $titikSvg = $titikSvg->map(function ($p) use ($margin, $lebarSvg) {
+                    $teks = $p['label'] . ' - ' . number_format($p['jumlah'], 0, ',', '.') . ' unit';
+                    $lebarKotak = max(90, strlen($teks) * 6.4 + 20);
+                    $p['teks'] = $teks;
+                    $p['lebarKotak'] = round($lebarKotak, 2);
+                    $p['xKotak'] = round(min(max($p['x'] - $lebarKotak / 2, $margin), $lebarSvg - $margin - $lebarKotak), 2);
+                    return $p;
+                });
             @endphp
 
-            <div class="mt-5 h-56">
+            <div class="mt-5 h-56" x-data="{ trenHover: null }">
                 <svg viewBox="0 0 {{ $lebarSvg }} {{ $tinggiSvg }}" preserveAspectRatio="none" class="h-full w-full overflow-visible">
                     <defs>
                         <linearGradient id="trenGradient" x1="0" y1="0" x2="0" y2="1">
@@ -115,12 +128,34 @@
                               stroke-linecap="round"
                               vector-effect="non-scaling-stroke" />
 
-                    @foreach ($titikSvg as $p)
+                    {{-- Garis bantu vertikal, cuma tampil di titik yang lagi dihover --}}
+                    @foreach ($titikSvg as $i => $p)
+                        <line x1="{{ $p['x'] }}" y1="{{ $p['y'] }}" x2="{{ $p['x'] }}" y2="{{ $tinggiSvg }}"
+                              stroke="rgb(79 70 229)" stroke-width="1" stroke-dasharray="3 3"
+                              vector-effect="non-scaling-stroke"
+                              x-show="trenHover === {{ $i }}" style="display: none;" />
+                    @endforeach
+
+                    @foreach ($titikSvg as $i => $p)
                         <circle cx="{{ $p['x'] }}" cy="{{ $p['y'] }}" r="3.5"
                                 fill="white" stroke="rgb(79 70 229)" stroke-width="2"
-                                vector-effect="non-scaling-stroke">
-                            <title>{{ $p['label'] }}: {{ number_format($p['jumlah'], 0, ',', '.') }} unit</title>
-                        </circle>
+                                vector-effect="non-scaling-stroke"
+                                :r="trenHover === {{ $i }} ? 5 : 3.5" />
+
+                        {{-- Lingkaran tak kasat mata, area sentuh lebih besar biar gampang dihover --}}
+                        <circle cx="{{ $p['x'] }}" cy="{{ $p['y'] }}" r="14" fill="transparent" style="cursor: pointer;"
+                                @mouseenter="trenHover = {{ $i }}" @mouseleave="trenHover = null" />
+                    @endforeach
+
+                    {{-- Tooltip, satu per titik, cuma yang lagi dihover yang tampil --}}
+                    @foreach ($titikSvg as $i => $p)
+                        @php $yKotak = max($p['y'] - 38, 2); @endphp
+                        <g x-show="trenHover === {{ $i }}" style="display: none; pointer-events: none;">
+                            <rect x="{{ $p['xKotak'] }}" y="{{ $yKotak }}" width="{{ $p['lebarKotak'] }}" height="24" rx="5"
+                                  fill="rgb(30 27 75)" />
+                            <text x="{{ $p['xKotak'] + $p['lebarKotak'] / 2 }}" y="{{ $yKotak + 15.5 }}"
+                                  text-anchor="middle" fill="white" font-size="12" font-family="inherit">{{ $p['teks'] }}</text>
+                        </g>
                     @endforeach
                 </svg>
             </div>
