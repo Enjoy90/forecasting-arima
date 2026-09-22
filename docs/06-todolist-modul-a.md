@@ -48,3 +48,23 @@ Layout (`layouts/app.blade.php`, `layouts/navigation.blade.php`, `partials/sideb
 - [ ] `php artisan config:cache`, `route:cache`, `view:cache` setelah kode final, dan `npm run build` untuk asset produksi.
 - [ ] Ganti password 4 akun seeder (`admin@pande.test`, dst — semua masih `password`) sebelum dipakai di luar lingkungan pengujian.
 - [ ] Jalankan `php artisan test` sekali lagi setelah Modul B selesai digabung, untuk memastikan tidak ada regresi lintas modul.
+
+## 6. Kontrol Akses per Role (RBAC) Belum Diterapkan
+
+**Audit 2026-09-22**: matriks hak akses di `docs/01-alur-kerja-sistem.md` §10 sudah lengkap dan siap jadi acuan, tapi baru **1 dari ~12 area menu** yang benar-benar diterapkan di kode. Sisanya bisa diakses semua role yang login, sama seperti admin.
+
+**Yang sudah benar:** Master ▸ Pengguna — `routes/operasional.php` pakai `->middleware('role:admin')`, dan `sidebar-operasional.blade.php` menyembunyikan menunya dari non-admin. Ini satu-satunya tempat `RoleMiddleware` (`app/Http/Middleware/RoleMiddleware.php`, alias `role` di `bootstrap/app.php`) benar-benar dipakai. Tidak ada Policy/`Gate::`/`@can` di manapun, dan seluruh `FormRequest::authorize()` hard-code `return true`.
+
+**Yang masih terbuka ke semua role (perlu digate sesuai `docs/01` §10), khusus route Modul A (`routes/operasional.php`):**
+
+- [x] Master Data (kategori, barang, supplier, pelanggan) — admin penuh, produksi tidak boleh akses, gudang & pimpinan lihat saja — **selesai 2026-09-22**
+- [x] Tahapan Produksi — admin & produksi penuh, gudang tidak boleh akses, pimpinan lihat saja — **selesai 2026-09-22**
+- [x] Pembelian (order, penerimaan, rekomendasi, import) — admin & gudang penuh, produksi tidak boleh akses, pimpinan lihat saja — **selesai 2026-09-22**
+- [ ] BOM / Komposisi — target: admin & produksi penuh, gudang tidak boleh akses, pimpinan lihat saja
+- [ ] Produksi (5 tahap + aksi perintah) — target: admin & produksi penuh, gudang & pimpinan lihat saja
+- [ ] Persediaan & Mutasi Stok, Opname — target: admin & gudang penuh, produksi & pimpinan lihat saja
+- [ ] Penjualan (faktur, import) — target: admin penuh, produksi & gudang tidak boleh akses, pimpinan lihat saja
+
+Sisa area (Peramalan, Target Produksi, Simulasi) ada di `routes/analisis.php`, dicatat di `docs/06-todolist-modul-b.md`.
+
+**Pendekatan yang dipakai (diputuskan 2026-09-22):** tidak bikin middleware baru. Tiap `Route::resource()` dipecah jadi 2 grup: grup "tulis" (`->except(['index','show'])`, isinya create/store/edit/update/destroy) didaftar LEBIH DULU dengan daftar role lebih ketat, baru grup "baca" (`->only(['index','show'])`) didaftar SETELAHNYA dengan daftar role lebih longgar — dua-duanya pakai `role:` middleware yang sudah ada. **Urutan pendaftaran ini penting**: kalau grup baca (yang punya rute `show` berpola `/{id}`) didaftar lebih dulu, rute itu akan menangkap kata "create" sebagai `{id}` dan bikin rute `/create` asli tidak pernah kesentuh (hasilnya 404, bukan halaman create) — ini kejadian nyata, ketangkep dari test yang baru ditulis, bukan cuma teori. Tombol Tambah/Ubah/Hapus di view index (`master/{kategori,barang,supplier,pelanggan,tahapan-produksi}/index.blade.php`, `pembelian/{index,show,rekomendasi}.blade.php`) disembunyikan sesuai role juga, supaya role "lihat saja" tidak melihat tombol yang berujung 403. Sidebar (`sidebar-operasional.blade.php`) disesuaikan sama. Test baru: `tests/Feature/Master/MasterDataRoleAksesTest.php` (6 test) dan `tests/Feature/Pembelian/PembelianRoleAksesTest.php` (3 test) — cek 403/200 tiap role di tiap rute, bukan cuma "tidak error". `php artisan test` penuh: **343 passed, 0 failed**.

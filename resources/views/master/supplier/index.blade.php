@@ -5,10 +5,12 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Data Supplier</h2>
                 <p class="text-sm text-gray-500 mt-0.5">Pemasok bahan baku beserta lead time pengirimannya.</p>
             </div>
-            <a href="{{ route('master.supplier.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                + Tambah Supplier
-            </a>
+            @if (auth()->user()?->role === 'admin')
+                <a href="{{ route('master.supplier.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    + Tambah Supplier
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -98,25 +100,27 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center justify-end gap-3">
-                                        <a href="{{ route('master.supplier.edit', $item) }}"
-                                           class="text-indigo-600 hover:text-indigo-800">Ubah</a>
+                                    @if (auth()->user()?->role === 'admin')
+                                        <div class="flex items-center justify-end gap-3">
+                                            <a href="{{ route('master.supplier.edit', $item) }}"
+                                               class="text-indigo-600 hover:text-indigo-800">Ubah</a>
 
-                                        <form method="POST" action="{{ route('master.supplier.destroy', $item) }}"
-                                              onsubmit="return confirm('Hapus supplier {{ $item->nama_supplier }}?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    @disabled($terpakai > 0)
-                                                    @class([
-                                                        'text-red-600 hover:text-red-800' => $terpakai === 0,
-                                                        'text-gray-300 cursor-not-allowed' => $terpakai > 0,
-                                                    ])
-                                                    title="{{ $terpakai > 0 ? 'Masih dipakai barang / pembelian — nonaktifkan saja lewat Ubah' : 'Hapus supplier' }}">
-                                                Hapus
-                                            </button>
-                                        </form>
-                                    </div>
+                                            <form method="POST" action="{{ route('master.supplier.destroy', $item) }}"
+                                                  onsubmit="return confirm('Hapus supplier {{ $item->nama_supplier }}?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        @disabled($terpakai > 0)
+                                                        @class([
+                                                            'text-red-600 hover:text-red-800' => $terpakai === 0,
+                                                            'text-gray-300 cursor-not-allowed' => $terpakai > 0,
+                                                        ])
+                                                        title="{{ $terpakai > 0 ? 'Masih dipakai barang / pembelian — nonaktifkan saja lewat Ubah' : 'Hapus supplier' }}">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

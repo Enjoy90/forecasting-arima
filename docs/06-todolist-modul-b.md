@@ -179,3 +179,16 @@ Dikerjakan pakai 2 agent terpisah (bukan paralel, berurutan, biar tidak ada 2 pr
 - Verifikasi akhir (dijalankan ulang manual, bukan cuma laporan agent): `php artisan test` penuh → **334 passed, 0 failed**.
 
 **Modul B (7 fase) selesai semua.** Seluruh menu "Peramalan (ARIMA)" dan "Simulasi & Pengujian" sudah aktif dan berfungsi penuh lewat browser, dari agregasi data historis sampai laporan PDF/Excel hasil simulasi backtesting. Catatan yang masih perlu ditindaklanjuti user (bukan kerjaan kode lagi): (1) diskusikan temuan performa skenario Sistem pada Fase 6 ke dosen pembimbing, (2) data penjualan masih dummy seeder, ganti dengan data asli CV. Pande Sejahtera sebelum dipakai di laporan skripsi final.
+
+### 2026-09-22: Audit RBAC — menu Peramalan & Simulasi belum digate per role
+
+Audit menyeluruh (bukan cuma Modul A) menemukan `RoleMiddleware` cuma dipakai di 1 dari ~12 area menu di seluruh aplikasi (lihat detail lengkap di `docs/06-todolist-modul-a.md` §6). Untuk sisi Modul B, `routes/analisis.php` **seluruhnya cuma dijaga `auth`+`verified`**, tidak ada `role:` middleware sama sekali, dan `sidebar-analisis.blade.php` tidak punya satupun `@if` role (beda dari `sidebar-operasional.blade.php` yang setidaknya sudah menyembunyikan menu Pengguna dari non-admin).
+
+Dampaknya cukup serius untuk area ini karena sesuai `docs/01-alur-kerja-sistem.md` §10, **Peramalan & Target Produksi** dan **Simulasi & Pengujian** (tolak ukur utama skripsi) seharusnya cuma bisa dijalankan penuh oleh Pimpinan — termasuk aksi `target.setujui` (approve target produksi) yang sekarang bisa dipanggil siapapun yang login, bukan cuma Pimpinan.
+
+**Belum dikerjakan, target sesuai `docs/01` §10:**
+
+- [ ] Peramalan & Target Produksi (`peramalan.*` di `routes/analisis.php`) — admin & produksi lihat saja, gudang tidak boleh akses, pimpinan penuh (termasuk `target.setujui`)
+- [ ] Simulasi & Pengujian (`simulasi.*`) — admin lihat saja, produksi & gudang tidak boleh akses, pimpinan penuh
+
+Sama seperti catatan di Modul A: middleware `role:` saat ini cuma allow/deny penuh per route, belum ada varian "lihat saja". Perlu diputuskan dulu pendekatannya (middleware baru, atau split route index/show vs create/update/delete) sebelum diterapkan ke kedua modul sekaligus, supaya konsisten.

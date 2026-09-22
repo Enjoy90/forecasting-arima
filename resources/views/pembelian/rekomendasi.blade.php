@@ -36,10 +36,12 @@
                     Rekomendasi muncul setelah Modul B menjalankan perhitungan target produksi dan menemukan
                     bahan yang stoknya kurang. Selama itu belum dilakukan, halaman ini memang kosong.
                 </p>
-                <a href="{{ route('pembelian.order.create') }}"
-                   class="mt-4 inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
-                    Buat Order Manual
-                </a>
+                @if (in_array(auth()->user()?->role, ['admin', 'gudang'], true))
+                    <a href="{{ route('pembelian.order.create') }}"
+                       class="mt-4 inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                        Buat Order Manual
+                    </a>
+                @endif
             </div>
         @else
             @foreach ($perSupplier as $supplierId => $baris)
@@ -61,7 +63,9 @@
                                     @endunless
                                 </p>
                             </div>
-                            <x-primary-button>Buat Order</x-primary-button>
+                            @if (in_array(auth()->user()?->role, ['admin', 'gudang'], true))
+                                <x-primary-button>Buat Order</x-primary-button>
+                            @endif
                         </div>
 
                         <div class="overflow-x-auto">

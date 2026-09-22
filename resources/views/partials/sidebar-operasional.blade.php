@@ -10,22 +10,31 @@
     // Sementara semua href diisi '#'. Ganti satu per satu saat halamannya jadi.
     $itemClass = 'block px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800 hover:text-white';
     $headClass = 'px-3 mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500';
+    $role = auth()->user()?->role;
 @endphp
 
 <div>
     <p class="{{ $headClass }}">Master Data</p>
     <div class="space-y-0.5">
-        <a href="{{ route('master.kategori.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.kategori.*')])>Data Kategori</a>
-        <a href="{{ route('master.barang.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.barang.*')])>Data Barang</a>
-        <a href="{{ route('master.supplier.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.supplier.*')])>Data Supplier</a>
-        <a href="{{ route('master.pelanggan.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.pelanggan.*')])>Data Pelanggan</a>
-        <a href="{{ route('master.tahapan-produksi.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.tahapan-produksi.*')])>Tahapan Produksi</a>
-        @if (auth()->user()?->role === 'admin')
+        {{-- Kategori/Barang/Supplier/Pelanggan: admin penuh, gudang & pimpinan lihat saja, produksi tidak boleh akses. --}}
+        @if (in_array($role, ['admin', 'gudang', 'pimpinan'], true))
+            <a href="{{ route('master.kategori.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.kategori.*')])>Data Kategori</a>
+            <a href="{{ route('master.barang.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.barang.*')])>Data Barang</a>
+            <a href="{{ route('master.supplier.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.supplier.*')])>Data Supplier</a>
+            <a href="{{ route('master.pelanggan.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.pelanggan.*')])>Data Pelanggan</a>
+        @endif
+
+        {{-- Tahapan Produksi: admin & produksi penuh, pimpinan lihat saja, gudang tidak boleh akses. --}}
+        @if (in_array($role, ['admin', 'produksi', 'pimpinan'], true))
+            <a href="{{ route('master.tahapan-produksi.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.tahapan-produksi.*')])>Tahapan Produksi</a>
+        @endif
+
+        @if ($role === 'admin')
             <a href="{{ route('master.pengguna.index') }}"
                @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('master.pengguna.*')])>Pengguna</a>
         @endif
@@ -35,14 +44,20 @@
 <div>
     <p class="{{ $headClass }}">Transaksi &amp; Operasional</p>
     <div class="space-y-0.5">
-        <a href="{{ route('pembelian.order.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('pembelian.order.*')])>Pembelian</a>
-        <a href="{{ route('pembelian.riwayat') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('pembelian.riwayat')])>Riwayat Pembelian Bahan</a>
-        <a href="{{ route('pembelian.rekomendasi.index') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('pembelian.rekomendasi.*')])>Rekomendasi Pembelian</a>
-        <a href="{{ route('pembelian.import.form') }}"
-           @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('pembelian.import.*')])>Import Pembelian</a>
+        {{-- Pembelian: admin & gudang penuh, pimpinan lihat saja, produksi tidak boleh akses. --}}
+        @if (in_array($role, ['admin', 'gudang', 'pimpinan'], true))
+            <a href="{{ route('pembelian.order.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('pembelian.order.*')])>Pembelian</a>
+            <a href="{{ route('pembelian.riwayat') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('pembelian.riwayat')])>Riwayat Pembelian Bahan</a>
+            <a href="{{ route('pembelian.rekomendasi.index') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('pembelian.rekomendasi.*')])>Rekomendasi Pembelian</a>
+        @endif
+        {{-- Import Pembelian mengubah data (bukan cuma lihat), jadi pimpinan yang cuma "lihat saja" tidak dapat menu ini. --}}
+        @if (in_array($role, ['admin', 'gudang'], true))
+            <a href="{{ route('pembelian.import.form') }}"
+               @class([$itemClass, 'bg-indigo-600 text-white hover:bg-indigo-600' => request()->routeIs('pembelian.import.*')])>Import Pembelian</a>
+        @endif
 
         <p class="px-3 pt-3 pb-1 text-xs font-medium text-gray-500 uppercase tracking-wide">Produksi</p>
         <a href="{{ route('produksi.bom.index') }}"

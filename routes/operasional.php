@@ -51,35 +51,75 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // -----------------------------------------------------------------
     // MASTER DATA
+    //
+    // Hak akses per docs/01-alur-kerja-sistem.md §10: kategori/barang/
+    // supplier/pelanggan -> admin penuh, gudang & pimpinan lihat saja,
+    // produksi tidak boleh akses. Tahapan Produksi -> admin & produksi
+    // penuh, pimpinan lihat saja, gudang tidak boleh akses. Pengguna ->
+    // admin saja.
     // -----------------------------------------------------------------
     Route::prefix('master')->name('master.')->group(function () {
-        Route::resource('kategori', KategoriController::class);
-        Route::resource('barang', BarangController::class);
-        Route::resource('supplier', SupplierController::class);
-        Route::resource('pelanggan', PelangganController::class);
-        Route::resource('tahapan-produksi', TahapanProduksiController::class);
-        Route::resource('pengguna', PenggunaController::class)->middleware('role:admin');
+        // Penting: grup "tulis" (punya rute literal /create) harus didaftar
+        // LEBIH DULU daripada grup "baca" (punya rute /{id} buat show). Kalau
+        // kebalik, rute show yang wildcard-nya "{id}" keburu menangkap kata
+        // "create" sebagai id sebelum sempat sampai ke rute create aslinya,
+        // dan Laravel berhenti di situ (bukan lanjut ke rute berikutnya yang
+        // juga cocok) sehingga hasilnya 404 alih-alih halaman create.
+        Route::middleware('role:admin')->group(function () {
+            Route::resource('kategori', KategoriController::class)->except(['index', 'show']);
+            Route::resource('barang', BarangController::class)->except(['index', 'show']);
+            Route::resource('supplier', SupplierController::class)->except(['index', 'show']);
+            Route::resource('pelanggan', PelangganController::class)->except(['index', 'show']);
+            Route::resource('pengguna', PenggunaController::class);
+        });
+
+        Route::middleware('role:admin,gudang,pimpinan')->group(function () {
+            Route::resource('kategori', KategoriController::class)->only(['index', 'show']);
+            Route::resource('barang', BarangController::class)->only(['index', 'show']);
+            Route::resource('supplier', SupplierController::class)->only(['index', 'show']);
+            Route::resource('pelanggan', PelangganController::class)->only(['index', 'show']);
+        });
+
+        Route::middleware('role:admin,produksi')->group(function () {
+            Route::resource('tahapan-produksi', TahapanProduksiController::class)->except(['index', 'show']);
+        });
+
+        Route::middleware('role:admin,produksi,pimpinan')->group(function () {
+            Route::resource('tahapan-produksi', TahapanProduksiController::class)->only(['index', 'show']);
+        });
     });
 
     // -----------------------------------------------------------------
     // PEMBELIAN
+    //
+    // Hak akses: admin & gudang penuh, pimpinan lihat saja, produksi
+    // tidak boleh akses sama sekali.
     // -----------------------------------------------------------------
     Route::prefix('pembelian')->name('pembelian.')->group(function () {
-        Route::get('riwayat', [PembelianController::class, 'riwayat'])->name('riwayat');
-        Route::resource('order', PembelianController::class);
+        // Sama seperti Master Data: grup "tulis" (rute literal /order/create)
+        // wajib didaftar sebelum grup "baca" (rute /order/{id} buat show),
+        // supaya show tidak menangkap "create" duluan sebagai id.
+        Route::middleware('role:admin,gudang')->group(function () {
+            Route::resource('order', PembelianController::class)->except(['index', 'show']);
 
-        // Dua tindakan yang mengubah keadaan order, di luar CRUD biasa.
-        Route::post('order/{order}/terima', [PenerimaanController::class, 'store'])->name('order.terima');
-        Route::post('order/{order}/batal', [PembelianController::class, 'batal'])->name('order.batal');
+            // Dua tindakan yang mengubah keadaan order, di luar CRUD biasa.
+            Route::post('order/{order}/terima', [PenerimaanController::class, 'store'])->name('order.terima');
+            Route::post('order/{order}/batal', [PembelianController::class, 'batal'])->name('order.batal');
 
-        // Titik temu dengan Modul B: membaca tabel kebutuhan_bahan yang diisi
-        // perhitungan target produksi, lalu mengubahnya menjadi order pembelian.
-        Route::get('rekomendasi', [RekomendasiController::class, 'index'])->name('rekomendasi.index');
-        Route::post('rekomendasi', [RekomendasiController::class, 'store'])->name('rekomendasi.store');
+            // Titik temu dengan Modul B: membaca tabel kebutuhan_bahan yang diisi
+            // perhitungan target produksi, lalu mengubahnya menjadi order pembelian.
+            Route::post('rekomendasi', [RekomendasiController::class, 'store'])->name('rekomendasi.store');
 
-        Route::get('import', [ImportPembelianController::class, 'form'])->name('import.form');
-        Route::get('import/template', [ImportPembelianController::class, 'template'])->name('import.template');
-        Route::post('import', [ImportPembelianController::class, 'store'])->name('import.store');
+            Route::get('import', [ImportPembelianController::class, 'form'])->name('import.form');
+            Route::get('import/template', [ImportPembelianController::class, 'template'])->name('import.template');
+            Route::post('import', [ImportPembelianController::class, 'store'])->name('import.store');
+        });
+
+        Route::middleware('role:admin,gudang,pimpinan')->group(function () {
+            Route::get('riwayat', [PembelianController::class, 'riwayat'])->name('riwayat');
+            Route::get('rekomendasi', [RekomendasiController::class, 'index'])->name('rekomendasi.index');
+            Route::resource('order', PembelianController::class)->only(['index', 'show']);
+        });
     });
 
     // -----------------------------------------------------------------

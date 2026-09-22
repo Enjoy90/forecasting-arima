@@ -5,10 +5,12 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Data Barang</h2>
                 <p class="text-sm text-gray-500 mt-0.5">Bahan baku, barang setengah jadi, dan barang jadi dalam satu daftar.</p>
             </div>
-            <a href="{{ route('master.barang.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                + Tambah Barang
-            </a>
+            @if (auth()->user()?->role === 'admin')
+                <a href="{{ route('master.barang.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    + Tambah Barang
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -153,25 +155,27 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center justify-end gap-3">
-                                        <a href="{{ route('master.barang.edit', $item) }}"
-                                           class="text-indigo-600 hover:text-indigo-800">Ubah</a>
+                                    @if (auth()->user()?->role === 'admin')
+                                        <div class="flex items-center justify-end gap-3">
+                                            <a href="{{ route('master.barang.edit', $item) }}"
+                                               class="text-indigo-600 hover:text-indigo-800">Ubah</a>
 
-                                        <form method="POST" action="{{ route('master.barang.destroy', $item) }}"
-                                              onsubmit="return confirm('Hapus barang {{ $item->nama_barang }}?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    @disabled($terpakai > 0)
-                                                    @class([
-                                                        'text-red-600 hover:text-red-800' => $terpakai === 0,
-                                                        'text-gray-300 cursor-not-allowed' => $terpakai > 0,
-                                                    ])
-                                                    title="{{ $terpakai > 0 ? 'Sudah punya riwayat transaksi / analisis — nonaktifkan saja lewat Ubah' : 'Hapus barang' }}">
-                                                Hapus
-                                            </button>
-                                        </form>
-                                    </div>
+                                            <form method="POST" action="{{ route('master.barang.destroy', $item) }}"
+                                                  onsubmit="return confirm('Hapus barang {{ $item->nama_barang }}?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        @disabled($terpakai > 0)
+                                                        @class([
+                                                            'text-red-600 hover:text-red-800' => $terpakai === 0,
+                                                            'text-gray-300 cursor-not-allowed' => $terpakai > 0,
+                                                        ])
+                                                        title="{{ $terpakai > 0 ? 'Sudah punya riwayat transaksi / analisis — nonaktifkan saja lewat Ubah' : 'Hapus barang' }}">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

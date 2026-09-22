@@ -5,10 +5,12 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Tahapan Produksi</h2>
                 <p class="text-sm text-gray-500 mt-0.5">Waktu proses &amp; kapasitas tiap tahapan pembuatan sekop.</p>
             </div>
-            <a href="{{ route('master.tahapan-produksi.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                + Tambah Tahapan
-            </a>
+            @if (in_array(auth()->user()?->role, ['admin', 'produksi'], true))
+                <a href="{{ route('master.tahapan-produksi.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    + Tambah Tahapan
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -143,25 +145,27 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center justify-end gap-3">
-                                        <a href="{{ route('master.tahapan-produksi.edit', $item) }}"
-                                           class="text-indigo-600 hover:text-indigo-800">Ubah</a>
+                                    @if (in_array(auth()->user()?->role, ['admin', 'produksi'], true))
+                                        <div class="flex items-center justify-end gap-3">
+                                            <a href="{{ route('master.tahapan-produksi.edit', $item) }}"
+                                               class="text-indigo-600 hover:text-indigo-800">Ubah</a>
 
-                                        <form method="POST" action="{{ route('master.tahapan-produksi.destroy', $item) }}"
-                                              onsubmit="return confirm('Hapus tahapan {{ $item->nama_tahapan }}?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    @disabled($terpakai > 0)
-                                                    @class([
-                                                        'text-red-600 hover:text-red-800' => $terpakai === 0,
-                                                        'text-gray-300 cursor-not-allowed' => $terpakai > 0,
-                                                    ])
-                                                    title="{{ $terpakai > 0 ? 'Masih dipakai BOM / produksi — nonaktifkan saja lewat Ubah' : 'Hapus tahapan' }}">
-                                                Hapus
-                                            </button>
-                                        </form>
-                                    </div>
+                                            <form method="POST" action="{{ route('master.tahapan-produksi.destroy', $item) }}"
+                                                  onsubmit="return confirm('Hapus tahapan {{ $item->nama_tahapan }}?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        @disabled($terpakai > 0)
+                                                        @class([
+                                                            'text-red-600 hover:text-red-800' => $terpakai === 0,
+                                                            'text-gray-300 cursor-not-allowed' => $terpakai > 0,
+                                                        ])
+                                                        title="{{ $terpakai > 0 ? 'Masih dipakai BOM / produksi — nonaktifkan saja lewat Ubah' : 'Hapus tahapan' }}">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

@@ -106,8 +106,8 @@
             </div>
         </div>
 
-        {{-- Tindakan --}}
-        @if ($pembelian->status === 'dipesan')
+        {{-- Tindakan: mengubah status/data order, hanya admin & gudang (pimpinan cuma lihat). --}}
+        @if ($pembelian->status === 'dipesan' && in_array(auth()->user()?->role, ['admin', 'gudang'], true))
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <h3 class="text-sm font-semibold text-gray-900">Penerimaan Barang</h3>
                 <p class="mt-1 text-sm text-gray-600">
@@ -146,7 +146,7 @@
                     </form>
                 </div>
             </div>
-        @else
+        @elseif ($pembelian->status !== 'dipesan')
             <div class="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                 Order berstatus <strong>{{ $daftarStatus[$pembelian->status] ?? $pembelian->status }}</strong> dan sudah dikunci.
                 @if ($pembelian->status === 'diterima')
@@ -154,6 +154,11 @@
                     <a href="{{ route('persediaan.mutasi', ['sumber' => 'pembelian']) }}"
                        class="font-medium text-indigo-600 hover:text-indigo-800">Mutasi Stok</a>.
                 @endif
+            </div>
+        @else
+            <div class="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                Order ini masih berstatus <strong>{{ $daftarStatus[$pembelian->status] ?? $pembelian->status }}</strong>.
+                Menerima, mengubah, atau membatalkan order adalah wewenang admin dan gudang.
             </div>
         @endif
     </div>
