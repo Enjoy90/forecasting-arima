@@ -318,6 +318,57 @@ class ProduksiTest extends TestCase
             ->assertNotFound();
     }
 
+    /**
+     * IDOR relasi: {tahapan} dan {perintah} di URL adalah dua route-model-binding
+     * yang berdiri sendiri-sendiri. Kode tahapan TP-02 di sini valid dan
+     * perintahnya juga valid, cuma keduanya bukan pasangan yang benar (perintah
+     * itu sebenarnya milik TP-01) — beda kasus dengan test kode tahapan asing
+     * di atas yang kode tahapannya sendiri tidak ada.
+     */
+    public function test_perintah_tidak_bisa_diakses_lewat_kode_tahapan_yang_salah(): void
+    {
+        $r = $this->resep();
+        $tahapan2 = TahapanProduksi::factory()->create(['kode_tahapan' => 'TP-02', 'urutan' => 2]);
+        $pengguna = $this->pengguna();
+
+        $this->actingAs($pengguna)->post(route('produksi.perintah.store', 'TP-01'), [
+            'tanggal_produksi' => '2026-09-10',
+            'bom_id' => $r['bom']->id,
+            'jumlah_target' => 20,
+        ]);
+        $produksi = Produksi::first();
+
+        // BOM milik TP-02 sendiri, supaya validasi bom-vs-tahapan di
+        // ProduksiRequest lolos duluan dan yang benar-benar diuji adalah
+        // pengecekan kepemilikan tahapan di controller, bukan validasi lain.
+        $bomTp2 = Bom::create([
+            'kode_bom' => 'BOM-02', 'nama_bom' => 'Resep Lain',
+            'barang_id' => $r['output']->id, 'tahapan_id' => $tahapan2->id,
+            'jumlah_output' => 1, 'is_aktif' => true,
+        ]);
+        $bomTp2->detail()->create(['barang_id' => $r['bahan']->id, 'jumlah_kebutuhan' => 1, 'persen_susut' => 0]);
+
+        $this->actingAs($pengguna)->get(route('produksi.perintah.show', ['TP-02', $produksi]))->assertNotFound();
+        $this->actingAs($pengguna)->get(route('produksi.perintah.edit', ['TP-02', $produksi]))->assertNotFound();
+        $this->actingAs($pengguna)->put(route('produksi.perintah.update', ['TP-02', $produksi]), [
+            'tanggal_produksi' => '2026-09-10',
+            'bom_id' => $bomTp2->id,
+            'jumlah_target' => 20,
+        ])->assertNotFound();
+        $this->actingAs($pengguna)->delete(route('produksi.perintah.destroy', ['TP-02', $produksi]))->assertNotFound();
+        $this->actingAs($pengguna)->post(route('produksi.perintah.mulai', ['TP-02', $produksi]))->assertNotFound();
+        $baris = $produksi->bahan()->first();
+        $this->actingAs($pengguna)->post(route('produksi.perintah.realisasi', ['TP-02', $produksi]), [
+            'jumlah_hasil' => 1, 'jumlah_gagal' => 0,
+            'bahan' => [$baris->id => ['jumlah_pakai' => 1]],
+        ])->assertNotFound();
+        $this->actingAs($pengguna)->post(route('produksi.perintah.selesaikan', ['TP-02', $produksi]))->assertNotFound();
+        $this->actingAs($pengguna)->post(route('produksi.perintah.batal', ['TP-02', $produksi]))->assertNotFound();
+
+        // Lewat kode tahapan yang benar, tetap berfungsi normal.
+        $this->assertDatabaseHas('produksi', ['id' => $produksi->id, 'status' => Produksi::STATUS_DRAFT]);
+    }
+
     public function test_mutasi_produksi_menunjuk_ke_perintahnya(): void
     {
         $r = $this->resep();

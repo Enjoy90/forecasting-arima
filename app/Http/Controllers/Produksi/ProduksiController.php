@@ -131,6 +131,8 @@ class ProduksiController extends Controller
 
     public function show(TahapanProduksi $tahapan, Produksi $perintah): View
     {
+        $this->pastikanMilikTahapan($tahapan, $perintah);
+
         $perintah->load(['bom', 'barangOutput', 'user', 'bahan.barang', 'tahapan']);
 
         return view('produksi.perintah.show', [
@@ -147,6 +149,8 @@ class ProduksiController extends Controller
 
     public function edit(TahapanProduksi $tahapan, Produksi $perintah): View|RedirectResponse
     {
+        $this->pastikanMilikTahapan($tahapan, $perintah);
+
         if ($perintah->status !== Produksi::STATUS_DRAFT) {
             return $this->tolakKarenaStatus($tahapan, $perintah, 'diubah');
         }
@@ -160,6 +164,8 @@ class ProduksiController extends Controller
 
     public function update(ProduksiRequest $request, TahapanProduksi $tahapan, Produksi $perintah): RedirectResponse
     {
+        $this->pastikanMilikTahapan($tahapan, $perintah);
+
         if ($perintah->status !== Produksi::STATUS_DRAFT) {
             return $this->tolakKarenaStatus($tahapan, $perintah, 'diubah');
         }
@@ -189,6 +195,8 @@ class ProduksiController extends Controller
 
     public function destroy(TahapanProduksi $tahapan, Produksi $perintah): RedirectResponse
     {
+        $this->pastikanMilikTahapan($tahapan, $perintah);
+
         if ($perintah->status !== Produksi::STATUS_DRAFT) {
             return $this->tolakKarenaStatus($tahapan, $perintah, 'dihapus');
         }
@@ -210,6 +218,8 @@ class ProduksiController extends Controller
      */
     public function mulai(TahapanProduksi $tahapan, Produksi $perintah): RedirectResponse
     {
+        $this->pastikanMilikTahapan($tahapan, $perintah);
+
         if ($perintah->status !== Produksi::STATUS_DRAFT) {
             return $this->tolakKarenaStatus($tahapan, $perintah, 'dimulai');
         }
@@ -229,6 +239,8 @@ class ProduksiController extends Controller
      */
     public function realisasi(RealisasiProduksiRequest $request, TahapanProduksi $tahapan, Produksi $perintah): RedirectResponse
     {
+        $this->pastikanMilikTahapan($tahapan, $perintah);
+
         if ($perintah->status !== Produksi::STATUS_PROSES) {
             return $this->tolakKarenaStatus($tahapan, $perintah, 'dicatat realisasinya');
         }
@@ -262,6 +274,8 @@ class ProduksiController extends Controller
      */
     public function selesaikan(TahapanProduksi $tahapan, Produksi $perintah): RedirectResponse
     {
+        $this->pastikanMilikTahapan($tahapan, $perintah);
+
         try {
             $this->processor->selesaikan($perintah);
         } catch (BahanTidakCukupException|RuntimeException $e) {
@@ -284,6 +298,8 @@ class ProduksiController extends Controller
 
     public function batal(TahapanProduksi $tahapan, Produksi $perintah): RedirectResponse
     {
+        $this->pastikanMilikTahapan($tahapan, $perintah);
+
         if (! in_array($perintah->status, [Produksi::STATUS_DRAFT, Produksi::STATUS_PROSES], true)) {
             return $this->tolakKarenaStatus($tahapan, $perintah, 'dibatalkan');
         }
@@ -295,6 +311,18 @@ class ProduksiController extends Controller
         return redirect()
             ->route('produksi.perintah.show', [$tahapan->kode_tahapan, $perintah])
             ->with('sukses', "Perintah {$perintah->no_produksi} dibatalkan. Stok tidak tersentuh.");
+    }
+
+    /**
+     * {tahapan} dan {perintah} adalah dua route-model-binding yang berdiri
+     * sendiri-sendiri, jadi URL bisa saja mencampur kode tahapan yang valid
+     * dengan id perintah milik tahapan lain (IDOR relasi, bukan cuma "id
+     * tidak ada"). 404 di sini, bukan diam-diam memproses kombinasi yang
+     * tidak nyambung.
+     */
+    private function pastikanMilikTahapan(TahapanProduksi $tahapan, Produksi $perintah): void
+    {
+        abort_unless($perintah->tahapan_id === $tahapan->id, 404);
     }
 
     private function tolakKarenaStatus(TahapanProduksi $tahapan, Produksi $perintah, string $tindakan): RedirectResponse
