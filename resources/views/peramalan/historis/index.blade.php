@@ -95,25 +95,31 @@
     @if ($barang && $deret->isNotEmpty())
         @push('skrip')
             <script>
-                new Chart(document.getElementById('grafikDeret'), {
-                    type: 'line',
-                    data: {
-                        labels: @json($deret->pluck('nama_periode')),
-                        datasets: [{
-                            label: 'Penjualan (Zt)',
-                            data: @json($deret->pluck('nilai_zt')),
-                            borderColor: '#4f46e5',
-                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                            tension: 0.2,
-                            fill: true,
-                        }],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true } },
-                    },
+                // app.js (yang mendaftarkan window.Chart) dimuat sebagai <script type="module">,
+                // yang selalu dieksekusi setelah dokumen selesai diparsing -- belakangan dari
+                // script biasa ini. Tunggu DOMContentLoaded (yang menunggu semua modul selesai)
+                // supaya Chart sudah pasti terdefinisi sebelum dipakai.
+                document.addEventListener('DOMContentLoaded', function () {
+                    new Chart(document.getElementById('grafikDeret'), {
+                        type: 'line',
+                        data: {
+                            labels: @json($deret->pluck('nama_periode')),
+                            datasets: [{
+                                label: 'Penjualan (Zt)',
+                                data: @json($deret->pluck('nilai_zt')),
+                                borderColor: '#4f46e5',
+                                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                                tension: 0.2,
+                                fill: true,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true } },
+                        },
+                    });
                 });
             </script>
         @endpush

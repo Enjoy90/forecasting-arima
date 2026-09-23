@@ -188,6 +188,12 @@
 
     @push('skrip')
         <script>
+            // app.js (yang mendaftarkan window.Chart) dimuat sebagai <script type="module">,
+            // yang selalu dieksekusi setelah dokumen selesai diparsing -- belakangan dari
+            // script biasa ini. Tunggu DOMContentLoaded (yang menunggu semua modul selesai)
+            // supaya Chart sudah pasti terdefinisi sebelum dipakai, kalau tidak seluruh
+            // grafik di halaman ini gagal digambar (ReferenceError: Chart is not defined).
+            document.addEventListener('DOMContentLoaded', function () {
             function grafikCorrelogram(id, data) {
                 new Chart(document.getElementById(id), {
                     data: {
@@ -244,6 +250,7 @@
                     ],
                 },
                 options: { responsive: true, maintainAspectRatio: false },
+            });
             });
         </script>
     @endpush
