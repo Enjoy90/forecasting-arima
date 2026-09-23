@@ -184,15 +184,21 @@ class Forecaster
         $zAlpha = Distribution::zScore(1 - (1 - $tingkatKepercayaan) / 2);
 
         $interval = [];
-        $sumPsiKuadrat = 0.0;
+        // psi_0 = 1 selalu (definisi representasi MA-tak-hingga, Wei), jadi
+        // dijumlahkan lebih dulu sebelum psi_1. Tanpa ini, se(h=1) salah
+        // dihitung seolah cuma psi_1 (dan untuk model tanpa AR/MA sama
+        // sekali, psi_1..psi_h semuanya nol, jadi intervalnya kolaps jadi
+        // nol persis alih-alih sebesar sigma).
+        $sumPsiKuadrat = 1.0;
         for ($h = 1; $h <= $horizon; $h++) {
-            $sumPsiKuadrat += $psi[$h] ** 2;
             $se = $sigma * sqrt($sumPsiKuadrat);
 
             $interval[$h - 1] = [
                 'batas_bawah' => $forecast[$h - 1] - $zAlpha * $se,
                 'batas_atas' => $forecast[$h - 1] + $zAlpha * $se,
             ];
+
+            $sumPsiKuadrat += $psi[$h] ** 2;
         }
 
         return $interval;

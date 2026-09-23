@@ -54,8 +54,11 @@ class ForecasterTest extends TestCase
 
     public function test_forecast_ar1_interval_kepercayaan_sesuai_psi_weight_ar(): void
     {
-        // psi_j = phi^j utk AR(1) murni: psi1=0.5, psi2=0.25. sigma=1, Z(0.975)=1.959964.
-        // se(h=1)=sqrt(0.25)=0.5 ; se(h=2)=sqrt(0.25+0.0625)=0.559017
+        // psi_0=1 (selalu), psi_j = phi^j utk AR(1) murni: psi1=0.5, psi2=0.25.
+        // sigma=1, Z(0.975)=1.959964.
+        // Var(e_h) = sigma^2 * SUM_{j=0}^{h-1} psi_j^2 (Wei), psi_0 wajib ikut:
+        // se(h=1) = sqrt(psi0^2) = sqrt(1) = 1
+        // se(h=2) = sqrt(psi0^2+psi1^2) = sqrt(1+0.25) = 1.118034
         $model = $this->model(1, 0, [
             ['jenis' => 'KONSTANTA', 'lag' => 0, 'koefisien' => 0.0],
             ['jenis' => 'AR', 'lag' => 1, 'koefisien' => 0.5],
@@ -63,10 +66,38 @@ class ForecasterTest extends TestCase
 
         $hasil = $this->forecaster->forecast([10.0, 20.0], 0, $model, horizon: 2);
 
-        $this->assertEqualsWithDelta(10.0 - 1.959964 * 0.5, $hasil['interval'][0]['batas_bawah'], 1e-3);
-        $this->assertEqualsWithDelta(10.0 + 1.959964 * 0.5, $hasil['interval'][0]['batas_atas'], 1e-3);
-        $this->assertEqualsWithDelta(5.0 - 1.959964 * 0.559017, $hasil['interval'][1]['batas_bawah'], 1e-3);
-        $this->assertEqualsWithDelta(5.0 + 1.959964 * 0.559017, $hasil['interval'][1]['batas_atas'], 1e-3);
+        $this->assertEqualsWithDelta(10.0 - 1.959964 * 1.0, $hasil['interval'][0]['batas_bawah'], 1e-3);
+        $this->assertEqualsWithDelta(10.0 + 1.959964 * 1.0, $hasil['interval'][0]['batas_atas'], 1e-3);
+        $this->assertEqualsWithDelta(5.0 - 1.959964 * 1.118034, $hasil['interval'][1]['batas_bawah'], 1e-3);
+        $this->assertEqualsWithDelta(5.0 + 1.959964 * 1.118034, $hasil['interval'][1]['batas_atas'], 1e-3);
+    }
+
+    public function test_interval_h1_selalu_sigma_dikali_z_berapapun_modelnya(): void
+    {
+        // Kasus khusus tapi mendasar: forecast error 1-langkah-ke-depan
+        // SELALU persis guncangan berikutnya (psi_0=1), jadi se(h=1) = sigma,
+        // untuk model apapun -- termasuk yang psi_1..psi_h semuanya nol
+        // (ARIMA(0,0,0), murni konstanta). Sebelum diperbaiki, kode lama
+        // menjumlahkan psi_1..psi_h saja (melewatkan psi_0), jadi utk kasus
+        // ini intervalnya kolaps jadi nol persis -- persis gejala yang
+        // dilaporkan user: garis forecast/batas atas/batas bawah berimpit.
+        $model = $this->model(0, 0, [
+            ['jenis' => 'KONSTANTA', 'lag' => 0, 'koefisien' => 7.0],
+        ], sigmaKuadrat: 4.0);
+
+        $hasil = $this->forecaster->forecast([5.0, 9.0, 6.0, 8.0], 0, $model, horizon: 3);
+
+        foreach ($hasil['interval'] as $h => $iv) {
+            $lebar = $iv['batas_atas'] - $iv['batas_bawah'];
+            $this->assertGreaterThan(0.0, $lebar, "Lebar interval h=".($h + 1)." seharusnya tidak nol.");
+        }
+
+        // sigma=2, Z(0.975)=1.959964, se(h=1)=sigma*sqrt(psi_0^2)=2 utk semua h
+        // (psi_1..psi_3 = 0 karena tidak ada AR/MA), jadi ketiga interval sama lebar.
+        $seHarapan = 2.0;
+        foreach ($hasil['interval'] as $iv) {
+            $this->assertEqualsWithDelta($seHarapan * 1.959964 * 2, $iv['batas_atas'] - $iv['batas_bawah'], 1e-3);
+        }
     }
 
     public function test_forecast_arima_0_1_0_menghasilkan_forecast_naif(): void
