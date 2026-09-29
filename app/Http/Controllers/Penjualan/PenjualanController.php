@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Penjualan;
 
 use App\Exceptions\StokTidakCukupException;
+use App\Exports\PenjualanExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Penjualan\PenjualanRequest;
 use App\Models\Barang;
@@ -17,6 +18,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Transaksi penjualan.
@@ -72,6 +75,24 @@ class PenjualanController extends Controller
             'sampai' => $sampai,
             'daftarPelanggan' => Pelanggan::orderBy('kode_pelanggan')->get(['id', 'kode_pelanggan', 'nama_pelanggan']),
         ]);
+    }
+
+    /**
+     * Unduh data penjualan sebagai Excel, memakai filter yang sama dengan
+     * yang sedang ditampilkan di halaman daftar (bukan seluruh tabel).
+     */
+    public function unduh(Request $request): BinaryFileResponse
+    {
+        $cari = trim((string) $request->query('cari'));
+        $pelangganId = (string) $request->query('pelanggan', 'semua');
+        $sumber = (string) $request->query('sumber', 'semua');
+        $dari = $request->query('dari');
+        $sampai = $request->query('sampai');
+
+        return Excel::download(
+            new PenjualanExport($cari, $pelangganId, $sumber, $dari, $sampai),
+            'penjualan-'.now()->format('Ymd-His').'.xlsx'
+        );
     }
 
     public function create(): View

@@ -307,4 +307,20 @@ class PembelianTest extends TestCase
             ->assertSee('111')
             ->assertDontSee('222');
     }
+
+    public function test_unduh_menghasilkan_file_excel(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $barang = Barang::factory()->create();
+        $this->actingAs($this->pengguna())->post(route('pembelian.order.store'), [
+            'tanggal_pembelian' => '2026-09-01',
+            'supplier_id' => $supplier->id,
+            'detail' => [['barang_id' => $barang->id, 'jumlah' => 5, 'harga_satuan' => 111]],
+        ]);
+
+        $response = $this->actingAs($this->pengguna())->get(route('pembelian.order.unduh'));
+
+        $response->assertOk();
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('content-type'));
+    }
 }

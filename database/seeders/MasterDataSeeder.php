@@ -32,15 +32,17 @@ class MasterDataSeeder extends Seeder
 
         // -----------------------------------------------------------
         // SUPPLIER
-        // Lead time di sini adalah ASUMSI. Ganti dengan data asli
-        // CV. Pande Sejahtera bila sudah tersedia.
+        // Nama diambil dari daftar supplier asli CV Pande Sejahtera
+        // (DATA PEMBELI.docx). Alamat, telepon, dan lead time masih ASUMSI
+        // karena tidak tercantum di dokumen, wajib dikonfirmasi ke perusahaan.
         // -----------------------------------------------------------
         $supplier = [
-            ['SUP-01', 'UD Baja Perkasa',        '031-8812340', 'Jl. Raya Gresik No. 45, Surabaya', 14],
-            ['SUP-02', 'CV Kayu Jati Makmur',    '0331-556677', 'Jl. Kalimantan No. 12, Jember',    10],
-            ['SUP-03', 'Toko Cat Warna Indah',   '031-7745521', 'Jl. Kertajaya No. 88, Surabaya',    7],
-            ['SUP-04', 'UD Plastik Sejahtera',   '031-5567123', 'Jl. Margomulyo No. 7, Surabaya',    7],
-            ['SUP-05', 'Toko Besi Jaya Abadi',   '0321-445566', 'Jl. Mayjen Sungkono No. 3, Mojokerto', 14],
+            ['SUP-01', 'PT Cahaya Mandiri Bajamas',       '031-8812340', 'Jl. Raya Gresik No. 45, Surabaya', 14],
+            ['SUP-02', 'Albasia Sumber Jaya',              '0331-556677', 'Jl. Kalimantan No. 12, Jember',    10],
+            ['SUP-03', 'PT. Lotus Spektrum Jaya Abadi',    '031-7745521', 'Jl. Kertajaya No. 88, Surabaya',    7],
+            ['SUP-04', 'Omega Jaya Plastik',               '031-5567123', 'Jl. Margomulyo No. 7, Surabaya',    7],
+            ['SUP-05', 'Pak Solah',                        '0321-445566', 'Jl. Mayjen Sungkono No. 3, Mojokerto', 14],
+            ['SUP-06', 'CV. Sentral Fastindo',             '031-5998877', 'Jl. Kedungdoro No. 21, Surabaya',    7],
         ];
 
         foreach ($supplier as [$kode, $nama, $telp, $alamat, $lead]) {

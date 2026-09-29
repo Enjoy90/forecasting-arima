@@ -236,4 +236,20 @@ class PenjualanTest extends TestCase
 
         $this->assertDatabaseCount('penjualan', 0);
     }
+
+    public function test_unduh_menghasilkan_file_excel(): void
+    {
+        $barang = Barang::factory()->barangJadi()->create(['stok_tersedia' => 100]);
+        $pelanggan = Pelanggan::factory()->create();
+        $this->actingAs($this->pengguna())->post(route('penjualan.faktur.store'), [
+            'tanggal_penjualan' => '2026-09-05',
+            'pelanggan_id' => $pelanggan->id,
+            'detail' => [['barang_id' => $barang->id, 'jumlah' => 30, 'harga_satuan' => 95000]],
+        ]);
+
+        $response = $this->actingAs($this->pengguna())->get(route('penjualan.faktur.unduh'));
+
+        $response->assertOk();
+        $this->assertStringContainsString('spreadsheetml', $response->headers->get('content-type'));
+    }
 }

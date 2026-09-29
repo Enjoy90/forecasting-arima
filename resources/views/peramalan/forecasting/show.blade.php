@@ -156,7 +156,13 @@
 
         {{-- Tahap 4: Hasil Peramalan --}}
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
-            <h3 class="text-sm font-semibold text-gray-900">Tahap 4: Aktual vs Prediksi &amp; Forecast</h3>
+            <div class="flex items-center justify-between gap-4">
+                <h3 class="text-sm font-semibold text-gray-900">Tahap 4: Aktual vs Prediksi &amp; Forecast</h3>
+                <a href="{{ route('peramalan.forecasting.unduh', $peramalan) }}"
+                   class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                    Unduh Excel
+                </a>
+            </div>
             <div class="mt-3 h-80">
                 <canvas id="grafikForecast"></canvas>
             </div>

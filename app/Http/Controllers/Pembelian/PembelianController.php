@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Pembelian;
 
+use App\Exports\PembelianExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Pembelian\PembelianRequest;
 use App\Models\Barang;
@@ -15,6 +16,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Order pembelian bahan ke supplier.
@@ -72,6 +75,24 @@ class PembelianController extends Controller
             'daftarSupplier' => Supplier::orderBy('kode_supplier')->get(['id', 'kode_supplier', 'nama_supplier']),
             'jumlahDipesan' => Pembelian::where('status', 'dipesan')->count(),
         ]);
+    }
+
+    /**
+     * Unduh data order pembelian sebagai Excel, memakai filter yang sama
+     * dengan yang sedang ditampilkan di halaman daftar.
+     */
+    public function unduh(Request $request): BinaryFileResponse
+    {
+        $cari = trim((string) $request->query('cari'));
+        $status = (string) $request->query('status', 'semua');
+        $supplierId = (string) $request->query('supplier', 'semua');
+        $dari = $request->query('dari');
+        $sampai = $request->query('sampai');
+
+        return Excel::download(
+            new PembelianExport($cari, $status, $supplierId, $dari, $sampai),
+            'pembelian-'.now()->format('Ymd-His').'.xlsx'
+        );
     }
 
     public function create(): View

@@ -132,4 +132,23 @@ class ForecastingTest extends TestCase
             ->assertSee('Parameter Model Terpilih')
             ->assertSee('Aktual vs Prediksi');
     }
+
+    public function test_unduh_menghasilkan_file_excel_berisi_hasil_forecast(): void
+    {
+        $barang = $this->barangDenganDeret($this->dataBj01);
+        $this->actingAs($this->pengguna())->post(route('peramalan.forecasting.proses'), [
+            'barang_id' => $barang->id,
+            'horizon' => 6,
+        ]);
+        $peramalan = Peramalan::first();
+
+        $response = $this->actingAs($this->pengguna())
+            ->get(route('peramalan.forecasting.unduh', $peramalan));
+
+        $response->assertOk();
+        $this->assertStringContainsString(
+            'spreadsheetml',
+            $response->headers->get('content-type')
+        );
+    }
 }

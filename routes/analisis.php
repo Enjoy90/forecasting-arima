@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Proses forecasting: 4 tahap Box-Jenkins
             Route::get('forecasting', [ForecastingController::class, 'index'])->name('forecasting.index');
             Route::get('forecasting/{peramalan}', [ForecastingController::class, 'show'])->name('forecasting.show');
+            Route::get('forecasting/{peramalan}/unduh', [ForecastingController::class, 'unduh'])->name('forecasting.unduh');
 
             // Rincian waktu tunggu operasional pabrik
             Route::get('waktu-tunggu', [WaktuTungguController::class, 'index'])->name('waktu-tunggu.index');

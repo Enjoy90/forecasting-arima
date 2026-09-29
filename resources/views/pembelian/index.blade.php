@@ -5,8 +5,12 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Transaksi Pembelian</h2>
                 <p class="text-sm text-gray-500 mt-0.5">Order bahan ke supplier beserta status penerimaannya.</p>
             </div>
-            @if (in_array(auth()->user()?->role, ['admin', 'gudang'], true))
-                <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2">
+                <a href="{{ route('pembelian.order.unduh', request()->query()) }}"
+                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                    Unduh Excel
+                </a>
+                @if (in_array(auth()->user()?->role, ['admin', 'gudang'], true))
                     <a href="{{ route('pembelian.import.form') }}"
                        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
                         Import Excel
@@ -15,8 +19,8 @@
                        class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                         + Order Baru
                     </a>
-                </div>
-            @endif
+                @endif
+            </div>
         </div>
     </x-slot>
 

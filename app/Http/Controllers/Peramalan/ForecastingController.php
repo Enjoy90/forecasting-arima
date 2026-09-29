@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Peramalan;
 
+use App\Exports\HasilPeramalanExport;
 use App\Http\Controllers\Controller;
 use App\Models\Barang;
 use App\Models\LogAktivitas;
@@ -10,7 +11,9 @@ use App\Services\Arima\BoxJenkinsPipeline;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Proses Forecasting: menjalankan pipeline 4 tahap Box-Jenkins (docs/01 §5)
@@ -78,6 +81,18 @@ class ForecastingController extends Controller
             'dataPacf' => $this->dataCorrelogram($peramalan->korelasiLag->where('jenis', 'PACF')),
             'dataForecastChart' => $this->dataForecastChart($hasilInSample, $hasilForecast),
         ]);
+    }
+
+    /**
+     * Unduh tabel hasil forecast (periode, prediksi, interval kepercayaan)
+     * sebagai Excel -- persis isi tabel Tahap 4 di halaman hasil.
+     */
+    public function unduh(Peramalan $peramalan): BinaryFileResponse
+    {
+        return Excel::download(
+            new HasilPeramalanExport($peramalan),
+            "hasil-peramalan-{$peramalan->kode_peramalan}.xlsx"
+        );
     }
 
     /**

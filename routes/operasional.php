@@ -118,6 +118,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware('role:admin,gudang,pimpinan')->group(function () {
             Route::get('riwayat', [PembelianController::class, 'riwayat'])->name('riwayat');
             Route::get('rekomendasi', [RekomendasiController::class, 'index'])->name('rekomendasi.index');
+            // Rute literal /order/unduh wajib didaftar sebelum resource
+            // only(['index','show']) di bawah ini, supaya rute show
+            // (/order/{id}) tidak menangkap kata "unduh" sebagai id.
+            Route::get('order/unduh', [PembelianController::class, 'unduh'])->name('order.unduh');
             Route::resource('order', PembelianController::class)->only(['index', 'show']);
         });
     });
@@ -203,6 +207,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         Route::middleware('role:admin,pimpinan')->group(function () {
+            // Rute literal /faktur/unduh wajib didaftar sebelum resource
+            // only(['index','show']) di bawah ini, supaya rute show
+            // (/faktur/{id}) tidak menangkap kata "unduh" sebagai id.
+            Route::get('faktur/unduh', [PenjualanController::class, 'unduh'])->name('faktur.unduh');
             Route::resource('faktur', PenjualanController::class)->only(['index', 'show']);
         });
     });
