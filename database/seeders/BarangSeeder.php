@@ -31,7 +31,7 @@ class BarangSeeder extends Seeder
             ['BB-03', 'Kayu Gagang Sekop',       'Batang',  12000, 1400, 400, 10, 'KTG-02', 'SUP-02'],
             ['BB-04', 'Pipa Besi Gagang',        'Batang',  28000,  300, 100, 14, 'KTG-01', 'SUP-05'],
             ['BB-05', 'Cat Coating',             'Liter',   65000,   60,  20,  7, 'KTG-03', 'SUP-03'],
-            ['BB-06', 'Paku Keling',             'Pcs',       500, 5200, 1500, 5, 'KTG-01', 'SUP-06'],
+            ['BB-06', 'Paku Keling',             'Pcs',       500, 5200, 1500, 5, 'KTG-01', 'SUP-05'],
             ['BB-07', 'Plastik Kemasan + Label', 'Set',      1500, 1800, 500,  7, 'KTG-04', 'SUP-04'],
         ];
 
