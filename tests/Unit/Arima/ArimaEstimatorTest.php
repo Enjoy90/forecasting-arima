@@ -129,4 +129,28 @@ class ArimaEstimatorTest extends TestCase
             $this->assertGreaterThan($kandidat['k'], $kandidat['n']);
         }
     }
+
+    public function test_akar_di_luar_lingkaran_satuan_membedakan_model_sah_dan_meledak(): void
+    {
+        $this->assertTrue($this->estimator->akarDiLuarLingkaranSatuan([]));
+        $this->assertTrue($this->estimator->akarDiLuarLingkaranSatuan([0.5]));
+        $this->assertTrue($this->estimator->akarDiLuarLingkaranSatuan([0.5, 0.3]));
+        // AR(2) dengan akar kompleks bermodulus sekitar 1,03: masih stasioner.
+        $this->assertTrue($this->estimator->akarDiLuarLingkaranSatuan([1.675, -0.9377]));
+
+        $this->assertFalse($this->estimator->akarDiLuarLingkaranSatuan([1.0]));
+        $this->assertFalse($this->estimator->akarDiLuarLingkaranSatuan([1.575]));
+        $this->assertFalse($this->estimator->akarDiLuarLingkaranSatuan([0.6, 0.5]));
+        // Koefisien AR yang membuat prakiraan walk-forward meledak (jumlah 1,67).
+        $this->assertFalse($this->estimator->akarDiLuarLingkaranSatuan([1.22, 0.377, 0.076]));
+    }
+
+    public function test_grid_search_tidak_memilih_model_tidak_sah_bila_ada_yang_sah(): void
+    {
+        $grid = $this->estimator->gridSearch($this->ar1Sintetis, 3, 3);
+        $terpilih = collect($grid)->firstWhere('is_terpilih', true);
+
+        $this->assertTrue(collect($grid)->contains('is_sah', true));
+        $this->assertTrue($terpilih['is_sah']);
+    }
 }

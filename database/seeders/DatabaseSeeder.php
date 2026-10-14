@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             TahapanProduksiSeeder::class,
             BarangSeeder::class,
             BomSeeder::class,
-            PenjualanHistorisSeeder::class,
+            DataTransaksiSeeder::class,
         ]);
     }
 }

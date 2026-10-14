@@ -102,10 +102,14 @@ class ArimaEstimator
             ];
         }
 
+        $phi = array_column(array_filter($parameter, fn ($par) => $par['jenis'] === 'AR'), 'koefisien');
+        $theta = array_column(array_filter($parameter, fn ($par) => $par['jenis'] === 'MA'), 'koefisien');
+
         return [
             'ordo_p' => $p,
             'ordo_q' => $q,
             'parameter' => $parameter,
+            'is_sah' => $this->akarDiLuarLingkaranSatuan($phi) && $this->akarDiLuarLingkaranSatuan($theta),
             'aic' => $nObs * log($sigmaKuadratMle) + 2 * $k,
             'bic' => $nObs * log($sigmaKuadratMle) + $k * log($nObs),
             'sse' => $sse,
@@ -119,8 +123,10 @@ class ArimaEstimator
     /**
      * Grid search p=0..pMax, q=0..qMax. Kombinasi yang datanya tidak cukup
      * (n observasi <= jumlah parameter) dilewati. Model terpilih = AIC
-     * terkecil di antara yang seluruh parameternya signifikan; bila tidak
-     * ada satu pun yang seluruhnya signifikan, dipilih AIC terkecil keseluruhan.
+     * terkecil, dengan urutan prioritas: sah (AR stasioner dan MA invertibel)
+     * sekaligus seluruh parameter signifikan, lalu sah saja, lalu semua.
+     * Model yang tidak sah menghasilkan prakiraan yang meledak, jadi hanya
+     * dipakai bila tidak ada kandidat sah sama sekali.
      *
      * @param  array<int, float>  $data  deret yang sudah stasioner
      * @return array<int, array<string, mixed>>
@@ -143,8 +149,13 @@ class ArimaEstimator
             return [];
         }
 
-        $kandidatSignifikan = array_filter($kandidat, fn ($k) => $k['semua_signifikan']);
-        $sumberIndex = array_keys($kandidatSignifikan !== [] ? $kandidatSignifikan : $kandidat);
+        $sahSignifikan = array_filter($kandidat, fn ($k) => $k['is_sah'] && $k['semua_signifikan']);
+        $sah = array_filter($kandidat, fn ($k) => $k['is_sah']);
+        $sumberIndex = array_keys(match (true) {
+            $sahSignifikan !== [] => $sahSignifikan,
+            $sah !== [] => $sah,
+            default => $kandidat,
+        });
 
         $terpilihIndex = null;
         $aicTerkecil = null;
@@ -161,6 +172,35 @@ class ArimaEstimator
         unset($k);
 
         return array_values($kandidat);
+    }
+
+    /**
+     * Apakah seluruh akar polinomial 1 - c_1 B - ... - c_k B^k berada di luar
+     * lingkaran satuan. Untuk koefisien AR ini syarat stasioner, untuk
+     * koefisien MA (konvensi theta di atas) syarat invertibel. Diperiksa lewat
+     * rekursi Durbin-Levinson terbalik: syaratnya setara dengan seluruh
+     * koefisien refleksi |r_k| < 1.
+     *
+     * @param  array<int, float>  $koef
+     */
+    public function akarDiLuarLingkaranSatuan(array $koef): bool
+    {
+        $a = array_values($koef);
+
+        for ($k = count($a); $k >= 1; $k--) {
+            $r = $a[$k - 1];
+            if (abs($r) >= 1) {
+                return false;
+            }
+
+            $sebelumnya = [];
+            for ($j = 1; $j < $k; $j++) {
+                $sebelumnya[] = ($a[$j - 1] + $r * $a[$k - $j - 1]) / (1 - $r ** 2);
+            }
+            $a = $sebelumnya;
+        }
+
+        return true;
     }
 
     /**

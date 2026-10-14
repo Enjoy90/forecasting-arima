@@ -71,7 +71,8 @@ peramalan-arima/
 |   |-- migrations/              <- 29 migration (27 tabel domain + bawaan Laravel)
 |   |-- seeders/                 <- UserSeeder, KategoriSeeder, BarangSeeder,
 |   |                              TahapanProduksiSeeder, BomSeeder,
-|   |                              PenjualanHistorisSeeder (36 bulan untuk uji ARIMA)
+|   |                              DataTransaksiSeeder (impor Jan 2023 - Sep 2026 dari database/data)
+|   |-- data/                    <- berkas Excel penjualan & pembelian yang dimuat DataTransaksiSeeder
 |   |-- factories/
 |
 |-- resources/
