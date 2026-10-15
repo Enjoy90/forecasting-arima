@@ -38,7 +38,7 @@
                     </thead>
                     <tbody class="text-gray-700">
                         <tr>
-                            <td class="px-3 py-2 border-b">Total Stockout (unit)</td>
+                            <td class="px-3 py-2 border-b">Total Stockout (dz)</td>
                             <td class="px-3 py-2 border-b text-right">{{ number_format($simulasi->pb_total_stockout_unit, 0, ',', '.') }}</td>
                             <td class="px-3 py-2 border-b text-right font-semibold">{{ number_format($simulasi->sis_total_stockout_unit, 0, ',', '.') }}</td>
                         </tr>
@@ -48,7 +48,7 @@
                             <td class="px-3 py-2 border-b text-right font-semibold">{{ $simulasi->sis_bulan_stockout }}</td>
                         </tr>
                         <tr>
-                            <td class="px-3 py-2 border-b">Total Overstock (unit)</td>
+                            <td class="px-3 py-2 border-b">Total Overstock (dz)</td>
                             <td class="px-3 py-2 border-b text-right">{{ number_format($simulasi->pb_total_overstock_unit, 0, ',', '.') }}</td>
                             <td class="px-3 py-2 border-b text-right font-semibold">{{ number_format($simulasi->sis_total_overstock_unit, 0, ',', '.') }}</td>
                         </tr>
@@ -114,7 +114,7 @@
                     <p class="text-gray-900">{{ number_format($simulasi->nilai_z, 4) }} ({{ number_format($simulasi->service_level, 1) }}%)</p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">Biaya Simpan / Stockout per Unit</p>
+                    <p class="text-xs text-gray-500">Biaya Simpan / Stockout per dz</p>
                     <p class="text-gray-900">Rp {{ number_format($simulasi->biaya_simpan_per_unit, 0, ',', '.') }} / Rp {{ number_format($simulasi->biaya_stockout_per_unit, 0, ',', '.') }}</p>
                 </div>
             </div>

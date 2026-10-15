@@ -110,16 +110,17 @@ class BarangSeeder extends Seeder
         }
 
         // -----------------------------------------------------------
-        // BARANG JADI - penjualannya diramalkan ARIMA per produk.
-        // Harga jual = harga nota terakhir (Sep 2026). HPP masih ASUMSI dari
-        // perkiraan biaya bahan; Rees Q lebih mahal karena platnya 1,6 ml.
+        // BARANG JADI - satuan lusin (dz), penjualannya diramalkan ARIMA per
+        // produk. Harga jual = harga nota terakhir per dz (Sep 2026). HPP per
+        // dz masih ASUMSI dari perkiraan biaya bahan; Rees Q lebih mahal karena
+        // platnya 1,6 ml.
         // [kode, nama, hpp, harga_jual, stok, stok_min]
         // -----------------------------------------------------------
         $barangJadi = [
-            ['BJ-01', 'Sekop Papak Crocodille GG.KY', 25000, 34000, 3000, 1500],
-            ['BJ-02', 'Sekop Lancip Crocodille GG.KY', 25000, 34125,  900,  450],
-            ['BJ-03', 'Sekop Papak Rees Q GG.KY',      28000, 34125, 2000, 1000],
-            ['BJ-04', 'Sekop Lancip Rees Q GG.KY',     28000, 34125,  900,  450],
+            ['BJ-01', 'Sekop Papak Crocodille GG.KY', 300000, 408000, 250, 125],
+            ['BJ-02', 'Sekop Lancip Crocodille GG.KY', 300000, 409500,  75,  38],
+            ['BJ-03', 'Sekop Papak Rees Q GG.KY',      336000, 409500, 167,  83],
+            ['BJ-04', 'Sekop Lancip Rees Q GG.KY',     336000, 409500,  75,  38],
         ];
 
         foreach ($barangJadi as [$kode, $nama, $hpp, $hargaJual, $stok, $min]) {
@@ -130,7 +131,7 @@ class BarangSeeder extends Seeder
                     'jenis_barang' => Barang::JENIS_BARANG_JADI,
                     'kategori_id' => $kat['KTG-06'],
                     'supplier_id' => null,
-                    'satuan' => 'Pcs',
+                    'satuan' => 'Dz',
                     'harga_beli' => $hpp,
                     'harga_jual' => $hargaJual,
                     'stok_tersedia' => $stok,

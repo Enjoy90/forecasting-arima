@@ -7,6 +7,7 @@ use App\Models\Barang;
 use App\Models\LogAktivitas;
 use App\Models\Peramalan;
 use App\Models\TargetProduksi;
+use App\Services\Produksi\BomExploder;
 use App\Services\Stok\TargetProduksiPlanner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,7 +43,24 @@ class TargetProduksiController extends Controller
             ? TargetProduksi::with(['barang', 'kebutuhanBahan.barang'])->find($targetId)
             : null;
 
+        $kebutuhanSetengahJadi = collect();
+        if ($detail !== null && (float) $detail->jumlah_target_produksi > 0) {
+            $kebutuhan = collect((new BomExploder())->ledakkan($detail->barang, (float) $detail->jumlah_target_produksi)['setengah_jadi']);
+            $barangSj = Barang::whereIn('id', $kebutuhan->pluck('barang_id'))->get()->keyBy('id');
+            $kebutuhanSetengahJadi = $kebutuhan
+                ->map(fn ($k) => [
+                    'kode_barang' => $barangSj[$k['barang_id']]->kode_barang,
+                    'nama_barang' => $barangSj[$k['barang_id']]->nama_barang,
+                    'satuan' => $barangSj[$k['barang_id']]->satuan,
+                    'stok_tersedia' => (float) $barangSj[$k['barang_id']]->stok_tersedia,
+                    'jumlah' => $k['jumlah'],
+                ])
+                ->sortBy('kode_barang')
+                ->values();
+        }
+
         return view('peramalan.target.index', [
+            'kebutuhanSetengahJadi' => $kebutuhanSetengahJadi,
             'daftarBarang' => $daftarBarang,
             'barangId' => $barangId,
             'periodeForecast' => $periodeForecast,

@@ -38,7 +38,7 @@
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Penjualan Bulan Ini</p>
                 <p class="mt-1 text-2xl font-semibold text-gray-900">
                     {{ number_format($penjualanBulanIni['jumlah'], 0, ',', '.') }}
-                    <span class="text-base font-normal text-gray-500">unit</span>
+                    <span class="text-base font-normal text-gray-500">dz</span>
                 </p>
                 <p class="mt-1 text-xs text-gray-500">
                     {{ $penjualanBulanIni['faktur'] }} faktur &middot; Rp {{ number_format($penjualanBulanIni['nilai'], 0, ',', '.') }}
@@ -71,7 +71,7 @@
             <div class="flex items-baseline justify-between gap-4">
                 <div>
                     <h3 class="text-sm font-semibold text-gray-900">Tren Penjualan 12 Bulan Terakhir</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Dalam unit. Inilah deret yang diramalkan ARIMA oleh Modul B.</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Dalam dz, total semua jenis sekop. ARIMA meramalkan tiap jenis sekop secara terpisah.</p>
                 </div>
             </div>
 
@@ -100,7 +100,7 @@
                 // kelonggaran. Posisi x dijepit ke dalam batas SVG supaya
                 // kotaknya tidak terpotong di titik paling kiri/kanan.
                 $titikSvg = $titikSvg->map(function ($p) use ($margin, $lebarSvg) {
-                    $teks = $p['label'] . ' - ' . number_format($p['jumlah'], 0, ',', '.') . ' unit';
+                    $teks = $p['label'] . ' - ' . number_format($p['jumlah'], 0, ',', '.') . ' dz';
                     $lebarKotak = max(90, strlen($teks) * 6.4 + 20);
                     $p['teks'] = $teks;
                     $p['lebarKotak'] = round($lebarKotak, 2);

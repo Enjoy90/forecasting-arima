@@ -135,7 +135,7 @@
     </thead>
     <tbody>
         <tr>
-            <td>Total Stockout (unit)</td>
+            <td>Total Stockout (dz)</td>
             <td class="kanan">{{ number_format($simulasi->pb_total_stockout_unit, 0, ',', '.') }}</td>
             <td class="kanan">{{ number_format($simulasi->sis_total_stockout_unit, 0, ',', '.') }}</td>
         </tr>
@@ -145,7 +145,7 @@
             <td class="kanan">{{ $simulasi->sis_bulan_stockout }}</td>
         </tr>
         <tr>
-            <td>Total Overstock (unit)</td>
+            <td>Total Overstock (dz)</td>
             <td class="kanan">{{ number_format($simulasi->pb_total_overstock_unit, 0, ',', '.') }}</td>
             <td class="kanan">{{ number_format($simulasi->sis_total_overstock_unit, 0, ',', '.') }}</td>
         </tr>
@@ -182,7 +182,7 @@
     <tr>
         <td class="label">Nilai Z / Service Level</td>
         <td class="nilai">{{ number_format($simulasi->nilai_z, 4) }} ({{ number_format($simulasi->service_level, 1) }}%)</td>
-        <td class="label">Biaya Simpan / Stockout per Unit</td>
+        <td class="label">Biaya Simpan / Stockout per dz</td>
         <td class="nilai">Rp {{ number_format($simulasi->biaya_simpan_per_unit, 0, ',', '.') }} / Rp {{ number_format($simulasi->biaya_stockout_per_unit, 0, ',', '.') }}</td>
     </tr>
 </table>

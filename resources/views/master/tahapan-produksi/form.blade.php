@@ -68,7 +68,7 @@
         </div>
 
         <div>
-            <x-input-label for="kapasitas_per_hari" value="Kapasitas per Hari (unit)" />
+            <x-input-label for="kapasitas_per_hari" value="Kapasitas per Hari (satuan barang hasilnya, mis. pcs atau dz)" />
             <x-text-input id="kapasitas_per_hari" name="kapasitas_per_hari" type="number" class="mt-1 block w-full sm:w-40"
                           min="0" step="0.01" required
                           value="{{ old('kapasitas_per_hari', $tahapan->kapasitas_per_hari ?? 0) }}" />

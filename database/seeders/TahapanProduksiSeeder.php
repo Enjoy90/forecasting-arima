@@ -8,26 +8,26 @@ use Illuminate\Database\Seeder;
 class TahapanProduksiSeeder extends Seeder
 {
     /**
-     * RINCIAN WAKTU TUNGGU OPERASIONAL PABRIK (revisi sidang proposal).
+     * RINCIAN WAKTU TUNGGU OPERASIONAL PABRIK.
      *
-     * Angka waktu proses dan kapasitas di bawah ini masih ASUMSI.
-     * Wajib dikonfirmasi ke CV. Pande Sejahtera sebelum dipakai di laporan akhir.
+     * Waktu proses dan kapasitas dari wawancara bagian produksi CV. Pande
+     * Sejahtera (14 sampai 15 Oktober 2026, docs/07). Dari nol: hari 1 cetak
+     * kepala dan handle berjalan bersamaan, hari 2 coating (dioven), hari 3
+     * rakit lalu langsung dikemas di hari yang sama. Jadi pengemasan diberi
+     * waktu proses 0 hari.
      *
-     * Total waktu produksi dengan angka ini = 1+1+2+1+1 = 6 hari.
-     *
-     * Catatan: di lapangan Produksi Handle biasanya dikerjakan PARALEL dengan
-     * Produksi Kepala, sehingga nyatanya bisa 5 hari. Sistem menjumlahkan
-     * seluruh tahapan secara berurutan -- sengaja konservatif, agar rencana
-     * stok cenderung aman daripada terlambat.
+     * Satuan kapasitas mengikuti barang hasil tahapannya: kepala, handle, dan
+     * rakitan dalam pcs, sekop jadi dalam dz. Kapasitas coating 780 pcs adalah
+     * nilai tengah dari 720 sampai 840 pcs per hari, gabungan semua jenis.
      */
     public function run(): void
     {
         $tahapan = [
-            ['TP-01', 'Produksi Kepala',   1, 1, 150, 'Potong plat besi, press bentuk kepala, las penguat'],
-            ['TP-02', 'Produksi Handle',   2, 1, 200, 'Potong kayu gagang, serut, amplas halus'],
-            ['TP-03', 'Proses Coating',    3, 2, 200, 'Pengecatan kepala sekop + waktu kering 1 hari'],
-            ['TP-04', 'Perakitan Sekop',   4, 1, 180, 'Pasang kepala ke gagang, kunci dengan paku keling'],
-            ['TP-05', 'Proses Pengemasan', 5, 1, 300, 'Bungkus plastik, pasang label, siap kirim'],
+            ['TP-01', 'Produksi Kepala',   1, 1, 1200, 'Potong plat, cetak kepala papak atau lancip (1.200 pcs per hari per jenis)'],
+            ['TP-02', 'Produksi Handle',   2, 1, 1200, 'Potong kayu gagang, serut, amplas, varnish (1.200 pcs per hari)'],
+            ['TP-03', 'Proses Coating',    3, 1,  780, 'Powder coating dan oven, Hammerton dan biru bergantian (720 sampai 840 pcs per hari)'],
+            ['TP-04', 'Perakitan Sekop',   4, 1,  960, 'Pasang kepala ke gagang dan handle, kunci dengan sekrup (80 dz = 960 pcs per hari)'],
+            ['TP-05', 'Proses Pengemasan', 5, 0,   80, 'Stiker, plastik, kemas per lusin ke karung, di hari yang sama dengan perakitan (dz)'],
         ];
 
         foreach ($tahapan as [$kode, $nama, $urutan, $waktu, $kapasitas, $deskripsi]) {

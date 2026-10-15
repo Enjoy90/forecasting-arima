@@ -93,9 +93,9 @@
             <div class="panel-head">
                 <div>
                     <div class="panel-title">Contoh hasil ramalan</div>
-                    <div class="panel-sub">Model ARIMA, 6 bulan ke depan</div>
+                    <div class="panel-sub">Sekop Papak Crocodille, 6 bulan ke depan</div>
                 </div>
-                <div class="badge-good">MAPE 6,4%</div>
+                <div class="badge-good">MAPE 12,8%</div>
             </div>
             <svg class="chart-box" viewBox="0 0 460 190" width="100%" height="190" preserveAspectRatio="none">
                 <line x1="0" y1="40" x2="460" y2="40" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
@@ -108,9 +108,9 @@
                 <circle cx="460" cy="35" r="4.5" fill="#0E1B33" stroke="#7BD1F0" stroke-width="2"></circle>
             </svg>
             <div class="panel-foot">
-                <div><div class="pf-num">1.480</div><div class="pf-label">unit per bulan</div></div>
-                <div><div class="pf-num">&#177; 210</div><div class="pf-label">interval kepercayaan</div></div>
-                <div><div class="pf-num">Aman</div><div class="pf-label">status stok</div></div>
+                <div><div class="pf-num">771</div><div class="pf-label">dz bulan depan</div></div>
+                <div><div class="pf-num">&#177; 122</div><div class="pf-label">interval kepercayaan</div></div>
+                <div><div class="pf-num">Segera</div><div class="pf-label">perlu produksi</div></div>
             </div>
         </div>
     </div>

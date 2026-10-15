@@ -167,14 +167,19 @@
                 <canvas id="grafikForecast"></canvas>
             </div>
 
+            @php
+                $satuanBj = $peramalan->barang->satuan;
+                $pcsPerSatuan = strtolower($satuanBj) === 'dz' ? 12 : 1;
+            @endphp
             <div class="mt-6 overflow-x-auto">
                 <table class="min-w-full text-sm border border-gray-200">
                     <thead class="bg-gray-50">
                         <tr class="text-left text-xs font-semibold text-gray-600">
                             <th class="px-3 py-2 border-b">Periode</th>
-                            <th class="px-3 py-2 border-b text-right">Prediksi</th>
-                            <th class="px-3 py-2 border-b text-right">Batas Bawah (95%)</th>
-                            <th class="px-3 py-2 border-b text-right">Batas Atas (95%)</th>
+                            <th class="px-3 py-2 border-b text-right">Prediksi ({{ $satuanBj }})</th>
+                            <th class="px-3 py-2 border-b text-right">Setara (pcs)</th>
+                            <th class="px-3 py-2 border-b text-right">Batas Bawah 95% ({{ $satuanBj }})</th>
+                            <th class="px-3 py-2 border-b text-right">Batas Atas 95% ({{ $satuanBj }})</th>
                         </tr>
                     </thead>
                     <tbody class="text-gray-700">
@@ -182,6 +187,7 @@
                             <tr>
                                 <td class="px-3 py-2 border-b">{{ $h->periode }}</td>
                                 <td class="px-3 py-2 border-b text-right">{{ number_format($h->nilai_prediksi, 0, ',', '.') }}</td>
+                                <td class="px-3 py-2 border-b text-right text-gray-500">{{ number_format($h->nilai_prediksi * $pcsPerSatuan, 0, ',', '.') }}</td>
                                 <td class="px-3 py-2 border-b text-right">{{ number_format($h->batas_bawah, 0, ',', '.') }}</td>
                                 <td class="px-3 py-2 border-b text-right">{{ number_format($h->batas_atas, 0, ',', '.') }}</td>
                             </tr>

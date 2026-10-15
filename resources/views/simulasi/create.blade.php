@@ -58,17 +58,17 @@
                         <x-input-label for="stok_awal_simulasi" value="Stok Awal Simulasi" />
                         <x-text-input id="stok_awal_simulasi" name="stok_awal_simulasi" type="number" step="0.01" min="0"
                                       value="{{ old('stok_awal_simulasi') }}" class="mt-1 block w-full text-sm" required />
-                        <p class="mt-1 text-xs text-gray-500">Perkiraan stok barang jadi pada awal periode 12 bulan simulasi.</p>
+                        <p class="mt-1 text-xs text-gray-500">Perkiraan stok barang jadi (dz) pada awal periode 12 bulan simulasi.</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <x-input-label for="biaya_simpan_per_unit" value="Biaya Simpan / Unit / Bulan" />
+                            <x-input-label for="biaya_simpan_per_unit" value="Biaya Simpan per dz per Bulan" />
                             <x-text-input id="biaya_simpan_per_unit" name="biaya_simpan_per_unit" type="number" step="0.01" min="0"
                                           value="{{ old('biaya_simpan_per_unit') }}" class="mt-1 block w-full text-sm" required />
                         </div>
                         <div>
-                            <x-input-label for="biaya_stockout_per_unit" value="Biaya Stockout / Unit" />
+                            <x-input-label for="biaya_stockout_per_unit" value="Biaya Stockout per dz" />
                             <x-text-input id="biaya_stockout_per_unit" name="biaya_stockout_per_unit" type="number" step="0.01" min="0"
                                           value="{{ old('biaya_stockout_per_unit') }}" class="mt-1 block w-full text-sm" required />
                         </div>

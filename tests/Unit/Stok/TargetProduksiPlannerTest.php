@@ -73,11 +73,12 @@ class TargetProduksiPlannerTest extends TestCase
 
         $target = (new TargetProduksiPlanner())->rencanakan($peramalan, '2026-06');
 
-        // Tahapan kapasitas 1000 tidak menambah hari: L_produksi=1 (waktu_proses saja,
-        // dua level BOM sama-sama pakai tahapan ini jadi terakumulasi jadi satu baris).
-        // L_beli=7 (lead time bahan baku) -> L_total=8.
+        // Tahapan kapasitas 1000 tidak menambah hari. Rantai BOM punya dua langkah
+        // berurutan (komponen lalu perakitan) masing-masing 1 hari, dan jumlah 50 di
+        // bawah kapasitas sehingga tidak ada tumpang tindih: L_produksi = 2.
+        // Stok bahan 5 kurang dari kebutuhan, L_beli = 7 -> L_total = 9.
         $sigmaError = sqrt(100.0);
-        $leadTimeTotal = 1.0 + 7.0;
+        $leadTimeTotal = 2.0 + 7.0;
         $ltPeriode = $leadTimeTotal / 30;
         $nilaiZ = Distribution::zScore(0.95);
         $safetyStock = $nilaiZ * $sigmaError * sqrt($ltPeriode);

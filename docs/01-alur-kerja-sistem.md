@@ -187,23 +187,41 @@ flowchart LR
 
 | Komponen | Sumber data | Keterangan |
 |---|---|---|
-| `L_beli` | `barang.lead_time_hari` pada bahan baku | Diambil **nilai terbesar** dari seluruh bahan dalam BOM, karena pembelian dilakukan serentak; yang menentukan adalah bahan paling lama datang |
-| `t1..t5` | `tahapan_produksi.waktu_proses_hari` | Lama pengerjaan tiap tahapan |
-| kapasitas | `tahapan_produksi.kapasitas_per_hari` | Bila target melebihi kapasitas harian, tahapan itu memakan hari tambahan |
+| `L_beli` | `barang.lead_time_hari` pada bahan baku | Diambil **nilai terbesar dari bahan yang stoknya kurang** untuk kebutuhan itu. Bila semua bahan cukup, `L_beli = 0` |
+| `waktu_proses` | `tahapan_produksi.waktu_proses_hari` | Lama pengerjaan tiap tahapan saat mulai dari nol |
+| kapasitas | `tahapan_produksi.kapasitas_per_hari` | Dipakai bersama oleh semua produk yang dikerjakan pada periode yang sama |
 
 ### 4.2 Rumus
 
-```
-Hari tahapan-i   = waktu_proses_hari_i + ( CEIL(target / kapasitas_per_hari_i) - 1 )
-                   ; bila kapasitas_per_hari_i = 0, bagian kapasitas diabaikan
+> **Revisi (2026-10-15, docs/07).** Rumus awal menjumlahkan hari seluruh tahapan secara berurutan dan
+> menganggap seluruh target harus selesai di satu tahap sebelum tahap berikutnya mulai. Hasil wawancara
+> bagian produksi menunjukkan cara kerja pabrik berbeda: cetak kepala dan pembuatan handle berjalan
+> bersamaan, dan tahapan berjalan sambung-menyambung setiap hari. Dari nol, sekop pertama jadi pada hari
+> ketiga (hari 1 cetak kepala dan handle, hari 2 coating, hari 3 rakit dan langsung dikemas).
 
-L_produksi       = SUM( Hari tahapan-i )  untuk seluruh tahapan pada rantai BOM
-L_beli           = MAX( lead_time_hari )  dari seluruh bahan baku pada rantai BOM
-L_total          = L_beli + L_produksi
-
-Tanggal mulai produksi = awal periode penjualan - L_produksi
-Tanggal pesan bahan    = Tanggal mulai produksi - L_beli
 ```
+Hari tahap-i   = CEIL( jumlah di tahap-i / kapasitas_per_hari_i )     ; kapasitas gabungan semua produk
+Jalur kritis   = jumlah waktu_proses terbesar dari daun BOM sampai barang jadi
+Tumpang tindih = jumlah sambungan di jalur kritis yang boleh mulai di hari yang sama, yaitu bila
+                 kapasitas tahap sebelumnya >= kapasitas tahap ini DAN jumlah di tahap ini >= kapasitasnya
+
+L_produksi = Jalur kritis + ( MAX(Hari tahap-i) - 1 ) - Tumpang tindih      ; hari kerja
+L_beli     = MAX( lead_time_hari ) dari bahan baku yang kebutuhannya melebihi stok, 0 bila semua cukup
+L_total    = L_beli + L_produksi
+
+Tanggal mulai produksi = awal periode penjualan - L_produksi (hari kerja, Senin sampai Jumat)
+Tanggal pesan bahan    = Tanggal mulai produksi - L_beli (hari kalender)
+```
+
+Contoh dengan data pabrik (cetak 1.200, handle 1.200, coating 780 pcs per hari, rakit + kemas 80 dz per hari):
+
+| Pesanan | Perhitungan | L_produksi |
+|---|---|---|
+| 2 dz | 3 + (1 - 1) - 0 | 3 hari |
+| 56 dz (672 pcs) | 3 + (1 - 1) - 0, karena 672 < 780 coating mulai hari 2 | 3 hari |
+| 1.000 dz (12.000 pcs) | 3 + (16 - 1) - 1, coating terlama 16 hari dan mulai di hari yang sama dengan cetak | 17 hari |
+
+Simulasi data masa lalu (bab 7) memakai `L_beli` penuh tanpa pemeriksaan stok, karena stok bahan pada masa itu tidak diketahui.
 
 ### 4.3 Pengaruh ke Rencana Stok
 

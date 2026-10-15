@@ -25,7 +25,7 @@ class WaktuTungguTest extends TestCase
     {
         $tahapan = TahapanProduksi::factory()->create(['waktu_proses_hari' => 1, 'kapasitas_per_hari' => 1000]);
         $barangJadi = Barang::factory()->barangJadi()->create();
-        $bahanBaku = Barang::factory()->create(['lead_time_hari' => 9]);
+        $bahanBaku = Barang::factory()->create(['lead_time_hari' => 9, 'stok_tersedia' => 0]);
 
         $bom = Bom::create([
             'kode_bom' => 'BOM-UJI', 'nama_bom' => 'Resep', 'barang_id' => $barangJadi->id,
@@ -54,15 +54,16 @@ class WaktuTungguTest extends TestCase
         $barang = $this->barangDenganBom();
 
         $response = $this->actingAs($this->pengguna())->post(route('peramalan.waktu-tunggu.hitung'), [
-            'barang_id' => $barang->id,
-            'jumlah_target' => 50,
+            'jumlah' => [$barang->id => 50],
             'awal_periode' => '2026-12-01',
+            'periksa_stok' => 1,
         ]);
 
         $response->assertRedirect();
         $hasil = $response->getSession()->get('hasil');
 
-        // waktu=1 (kapasitas besar, tidak nambah hari), lead_time bahan=9 -> total=10
+        // waktu=1 (kapasitas besar, tidak nambah hari), stok bahan 0 dengan lead time 9 -> total=10.
+        // Mulai produksi mundur 1 hari kerja dari Selasa 2026-12-01 = Senin 2026-11-30.
         $this->assertEqualsWithDelta(9.0, $hasil['lead_time_pembelian_hari'], 1e-9);
         $this->assertEqualsWithDelta(1.0, $hasil['lead_time_produksi_hari'], 1e-9);
         $this->assertEqualsWithDelta(10.0, $hasil['lead_time_total_hari'], 1e-9);
@@ -75,9 +76,22 @@ class WaktuTungguTest extends TestCase
         $barang = Barang::factory()->barangJadi()->create();
 
         $response = $this->actingAs($this->pengguna())->post(route('peramalan.waktu-tunggu.hitung'), [
-            'barang_id' => $barang->id,
-            'jumlah_target' => 10,
+            'jumlah' => [$barang->id => 10],
             'awal_periode' => '2026-12-01',
+            'periksa_stok' => 1,
+        ]);
+
+        $response->assertSessionHas('gagal');
+    }
+
+    public function test_hitung_menolak_bila_semua_jumlah_kosong(): void
+    {
+        $barang = $this->barangDenganBom();
+
+        $response = $this->actingAs($this->pengguna())->post(route('peramalan.waktu-tunggu.hitung'), [
+            'jumlah' => [$barang->id => null],
+            'awal_periode' => '2026-12-01',
+            'periksa_stok' => 1,
         ]);
 
         $response->assertSessionHas('gagal');
@@ -87,6 +101,6 @@ class WaktuTungguTest extends TestCase
     {
         $response = $this->actingAs($this->pengguna())->post(route('peramalan.waktu-tunggu.hitung'), []);
 
-        $response->assertSessionHasErrors(['barang_id', 'jumlah_target', 'awal_periode']);
+        $response->assertSessionHasErrors(['jumlah', 'awal_periode', 'periksa_stok']);
     }
 }

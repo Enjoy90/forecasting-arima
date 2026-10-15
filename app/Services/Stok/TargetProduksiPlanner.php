@@ -42,10 +42,13 @@ class TargetProduksiPlanner
         $prediksiPenjualan = (float) $hasilForecast->nilai_prediksi;
         $sigmaError = sqrt((float) $peramalan->sigma_kuadrat);
 
+        // Kapasitas tahapan dipakai bersama semua produk, jadi prakiraan produk
+        // lain di periode yang sama ikut dihitung sebagai beban (docs/07).
         $waktuTunggu = (new LeadTimeCalculator())->hitung(
             $barang,
             $prediksiPenjualan,
-            Carbon::parse($periode.'-01')
+            Carbon::parse($periode.'-01'),
+            $this->bebanProdukLain($barang, $periode)
         );
 
         $ltPeriode = $waktuTunggu['lead_time_total_hari'] / 30;
@@ -95,8 +98,29 @@ class TargetProduksiPlanner
     }
 
     /**
-     * Jumlah semua komponen setengah jadi yang langsung dipakai BOM aktif
-     * barang jadi ini ("siap rakit" untuk tahapan terakhir).
+     * Prakiraan penjualan produk jadi lain untuk periode yang sama, diambil dari
+     * peramalan terakhir masing-masing produk.
+     *
+     * @return array<int, float> [barang_id => jumlah]
+     */
+    private function bebanProdukLain(Barang $barang, string $periode): array
+    {
+        $beban = [];
+        foreach (Barang::diramalkan()->aktif()->where('id', '!=', $barang->id)->get() as $lain) {
+            $peramalan = Peramalan::where('barang_id', $lain->id)->latest('id')->first();
+            $nilai = $peramalan?->hasil()->where('tipe', 'forecast')->where('periode', $periode)->value('nilai_prediksi');
+            if ($nilai !== null && (float) $nilai > 0) {
+                $beban[$lain->id] = (float) $nilai;
+            }
+        }
+
+        return $beban;
+    }
+
+    /**
+     * Stok komponen setengah jadi yang langsung dipakai BOM aktif barang jadi
+     * ini ("siap rakit" untuk tahapan terakhir), dalam satuan barang jadi.
+     * Contoh: resep 1 dz butuh 12 rakitan, jadi 400 rakitan setara 33,3 dz.
      */
     private function stokSetengahJadiSiapRakit(Barang $barang): float
     {
@@ -106,8 +130,8 @@ class TargetProduksiPlanner
         }
 
         return $bom->detail
-            ->filter(fn ($d) => $d->barang->jenis_barang === Barang::JENIS_SETENGAH_JADI)
-            ->sum(fn ($d) => (float) $d->barang->stok_tersedia);
+            ->filter(fn ($d) => $d->barang->jenis_barang === Barang::JENIS_SETENGAH_JADI && (float) $d->jumlah_kebutuhan > 0)
+            ->sum(fn ($d) => (float) $d->barang->stok_tersedia * (float) $bom->jumlah_output / (float) $d->jumlah_kebutuhan);
     }
 
     private function simpanKebutuhanBahan(TargetProduksi $targetProduksi, Barang $barang, float $jumlahTargetProduksi, float $safetyStock): void

@@ -64,7 +64,9 @@ class SimulationRunner
         // jumlah representatif -- docs/01 memakai satu L_total tetap sepanjang
         // simulasi, bukan L_total yang berubah tiap bulan.
         $jumlahRataRata = array_sum($inSample) / count($inSample);
-        $leadTimeTotal = (new LeadTimeCalculator())->hitung($barang, $jumlahRataRata)['lead_time_total_hari'];
+        // Stok bahan di masa lalu tidak diketahui, jadi waktu beli bahan dihitung
+        // penuh (tanpa pemeriksaan stok saat ini).
+        $leadTimeTotal = (new LeadTimeCalculator())->hitung($barang, $jumlahRataRata, null, [], false)['lead_time_total_hari'];
         $safetyStock = $nilaiZ * $sigmaError * sqrt($leadTimeTotal / 30);
         $delay = (int) ceil($leadTimeTotal / 30);
 

@@ -85,34 +85,36 @@
                 <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Prediksi Penjualan</p>
-                        <p class="mt-1 text-lg font-semibold text-gray-900">{{ number_format($detail->prediksi_penjualan, 0, ',', '.') }}</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900">{{ number_format($detail->prediksi_penjualan, 0, ',', '.') }} {{ $detail->barang->satuan }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Safety Stock</p>
-                        <p class="mt-1 text-lg font-semibold text-gray-900">{{ number_format($detail->safety_stock, 1) }}</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900">{{ number_format($detail->safety_stock, 1, ',', '.') }} {{ $detail->barang->satuan }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Reorder Point</p>
-                        <p class="mt-1 text-lg font-semibold text-gray-900">{{ number_format($detail->reorder_point, 1) }}</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900">{{ number_format($detail->reorder_point, 1, ',', '.') }} {{ $detail->barang->satuan }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Target Produksi</p>
-                        <p class="mt-1 text-lg font-semibold text-indigo-700">{{ number_format($detail->jumlah_target_produksi, 0, ',', '.') }}</p>
+                        <p class="mt-1 text-lg font-semibold text-indigo-700">{{ number_format($detail->jumlah_target_produksi, 0, ',', '.') }} {{ $detail->barang->satuan }}</p>
                     </div>
                 </div>
 
                 <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Stok Barang Jadi</p>
-                        <p class="mt-1 text-sm text-gray-900">{{ number_format($detail->stok_barang_jadi, 0, ',', '.') }}</p>
+                        <p class="mt-1 text-sm text-gray-900">{{ number_format($detail->stok_barang_jadi, 0, ',', '.') }} {{ $detail->barang->satuan }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Stok Setengah Jadi</p>
-                        <p class="mt-1 text-sm text-gray-900">{{ number_format($detail->stok_setengah_jadi, 0, ',', '.') }}</p>
+                        <p class="mt-1 text-sm text-gray-900">{{ number_format($detail->stok_setengah_jadi, 1, ',', '.') }} {{ $detail->barang->satuan }}</p>
+                        <p class="text-xs text-gray-500">rakitan siap kemas, disetarakan</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Waktu Tunggu Total</p>
-                        <p class="mt-1 text-sm text-gray-900">{{ number_format($detail->lead_time_total_hari, 1) }} hari</p>
+                        <p class="mt-1 text-sm text-gray-900">{{ number_format($detail->lead_time_total_hari, 0, ',', '.') }} hari</p>
+                        <p class="text-xs text-gray-500">beli bahan {{ number_format($detail->lead_time_pembelian_hari, 0) }} + produksi {{ number_format($detail->lead_time_produksi_hari, 0) }} hari kerja</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Status</p>
@@ -135,6 +137,31 @@
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Tanggal Pesan Bahan</p>
                             <p class="mt-1 text-sm text-gray-900">{{ $detail->tanggal_pesan_bahan->format('Y-m-d') }}</p>
                         </div>
+                    </div>
+                @endif
+
+                @if ($kebutuhanSetengahJadi->isNotEmpty())
+                    <div class="mt-6 overflow-x-auto">
+                        <h4 class="text-sm font-semibold text-gray-900">Kebutuhan Barang Setengah Jadi</h4>
+                        <p class="text-xs text-gray-500 mb-2">Jumlah kepala, handle, dan rakitan yang harus dibuat untuk target produksi di atas, termasuk persen susut.</p>
+                        <table class="min-w-full text-sm border border-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr class="text-left text-xs font-semibold text-gray-600">
+                                    <th class="px-3 py-2 border-b">Barang Setengah Jadi</th>
+                                    <th class="px-3 py-2 border-b text-right">Kebutuhan</th>
+                                    <th class="px-3 py-2 border-b text-right">Stok Tersedia</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-700">
+                                @foreach ($kebutuhanSetengahJadi as $sj)
+                                    <tr>
+                                        <td class="px-3 py-2 border-b">{{ $sj['kode_barang'] }} - {{ $sj['nama_barang'] }}</td>
+                                        <td class="px-3 py-2 border-b text-right">{{ number_format($sj['jumlah'], 0, ',', '.') }} {{ $sj['satuan'] }}</td>
+                                        <td class="px-3 py-2 border-b text-right">{{ number_format($sj['stok_tersedia'], 0, ',', '.') }} {{ $sj['satuan'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 @endif
 

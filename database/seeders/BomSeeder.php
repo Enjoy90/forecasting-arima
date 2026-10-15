@@ -107,8 +107,8 @@ class BomSeeder extends Seeder
                 'nama' => "Sekop {$label} GG.KY",
                 'output' => $jadi,
                 'tahapan' => 'TP-05',
-                'jumlah_output' => 12,   // satu lusin dikemas dan dimasukkan satu karung
-                'keterangan' => 'Pemasangan stiker, pembungkusan plastik, dan pengemasan satu lusin ke dalam karung',
+                'jumlah_output' => 1,    // 1 dz = 12 rakitan, dikemas ke dalam satu karung
+                'keterangan' => 'Pemasangan stiker, pembungkusan plastik, dan pengemasan satu lusin (12 pcs) ke dalam karung',
                 'komponen' => [
                     [$rakitan,     12,   'Pcs',  1],
                     [$m['stiker'], 12,   'Pcs',  2],
