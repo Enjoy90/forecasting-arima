@@ -29,9 +29,13 @@ class WaktuTungguController extends Controller
     {
         $data = $request->validate([
             'jumlah' => ['required', 'array'],
-            'jumlah.*' => ['nullable', 'numeric', 'min:0'],
+            'jumlah.*' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'awal_periode' => ['required', 'date'],
             'periksa_stok' => ['required', 'boolean'],
+        ], [
+            'jumlah.*.integer' => 'Jumlah pesanan harus bilangan bulat.',
+            'jumlah.*.min' => 'Jumlah pesanan paling sedikit 1.',
+            'jumlah.*.max' => 'Jumlah pesanan paling banyak 100.000.',
         ]);
 
         $pesanan = collect($data['jumlah'])

@@ -123,6 +123,8 @@ Contoh ini sama dengan simulasi di folder `simulasi/` yang sudah dicek Emi.
 | Contoh bagian 6 dengan resep sungguhan (termasuk susut) | 2 dz: 3 hari, 56 dz: 3 hari, 1.000 dz: 17 hari (31 hari bila semua bahan dibeli, 27 hari bila hanya kayu yang kurang) |
 | Target BJ-01 November 2026 | 599 dz, waktu tunggu 10 + 27 = 37 hari, pesan bahan 14 Sep, mulai produksi 24 Sep (sebelumnya jatuh di Januari) |
 | Seluruh test | 374 lolos |
+| Seluruh test setelah perbaikan QA tahap A, B, dan C | 391 lolos |
+| Master Tahapan dengan data sungguhan (C1, C2) | Dari nol 3 hari, penghambat Proses Coating (setara 63,7 dz per hari) |
 
 ## 10. Risiko
 
@@ -169,31 +171,31 @@ Setiap butir di bawah adalah **satu perubahan kecil**, dengan berkas yang disent
 
 ### C. Halaman dan validasi
 
-- [ ] **C1.** Master Tahapan: ringkasan "Total Waktu Produksi" diganti jalur kritis dari nol (3 hari).
+- [x] **C1.** Master Tahapan: ringkasan "Total Waktu Produksi" diganti jalur kritis dari nol (3 hari).
   Berkas: `TahapanProduksiController.php`, `master/tahapan-produksi/index.blade.php`. Selesai bila: tampil 3 hari, bukan 4.
-- [ ] **C2.** Master Tahapan: "Kapasitas Tersempit" dibandingkan dalam satuan setara, sehingga penghambatnya coating 780 pcs, bukan pengemasan 80 dz.
+- [x] **C2.** Master Tahapan: "Kapasitas Tersempit" dibandingkan dalam satuan setara, sehingga penghambatnya coating 780 pcs, bukan pengemasan 80 dz.
   Berkas: sama dengan C1. Selesai bila: penentu laju = Proses Coating.
-- [ ] **C3.** Master Tahapan: label kapasitas memakai satuan tiap tahap (pcs atau dz), dan catatan "dijumlahkan berurutan" dihapus.
+- [x] **C3.** Master Tahapan: label kapasitas memakai satuan tiap tahap (pcs atau dz), dan catatan "dijumlahkan berurutan" dihapus.
   Berkas: `master/tahapan-produksi/index.blade.php`.
-- [ ] **C4.** Waktu Tunggu: isian dz wajib bilangan bulat 1 sampai 100.000.
+- [x] **C4.** Waktu Tunggu: isian dz wajib bilangan bulat 1 sampai 100.000.
   Berkas: `WaktuTungguController.php`. Selesai bila: 1.000.000.000, 1e400, dan 0,01 ditolak dengan pesan, bukan menghasilkan tanggal tahun -58129.
-- [ ] **C5.** Target: parameter `barang` dan `target` yang bukan angka diabaikan.
+- [x] **C5.** Target: parameter `barang` dan `target` yang bukan angka diabaikan.
   Berkas: `TargetProduksiController.php`. Selesai bila: `?target[]=1` dan `?barang[]=1` tidak galat 500.
-- [ ] **C6.** Laporan: tanggal filter yang tidak valid diabaikan.
+- [x] **C6.** Laporan: tanggal filter yang tidak valid diabaikan.
   Berkas: `LaporanController.php`. Selesai bila: `/laporan/penjualan?dari=abc` tidak galat 500.
-- [ ] **C7.** Rincian per tahap di Waktu Tunggu: jumlah pcs dibulatkan ke atas.
+- [x] **C7.** Rincian per tahap di Waktu Tunggu: jumlah pcs dibulatkan ke atas.
   Berkas: `peramalan/waktu-tunggu/index.blade.php`. Selesai bila: 24,24 rakitan tampil 25.
-- [ ] **C8.** Tabel kebutuhan setengah jadi di Target: jumlah dibulatkan ke atas.
+- [x] **C8.** Tabel kebutuhan setengah jadi di Target: jumlah dibulatkan ke atas.
   Berkas: `peramalan/target/index.blade.php`.
-- [ ] **C9.** Pesan dan log setelah hitung target memakai satuan barang, bukan "unit".
+- [x] **C9.** Pesan dan log setelah hitung target memakai satuan barang, bukan "unit".
   Berkas: `TargetProduksiController.php`.
-- [ ] **C10.** Laporan Penjualan: total ditulis dalam dz.
+- [x] **C10.** Laporan Penjualan: total ditulis dalam dz.
   Berkas: view atau controller laporan penjualan. Selesai bila: "47.384 dz", bukan "unit".
-- [ ] **C11.** Laporan Produksi: total hasil dipisah per satuan, tidak menjumlahkan pcs dan dz.
+- [x] **C11.** Laporan Produksi: total hasil dipisah per satuan, tidak menjumlahkan pcs dan dz.
   Berkas: view atau controller laporan produksi.
-- [ ] **C12.** Excel hasil peramalan: kolom prediksi diberi satuan.
+- [x] **C12.** Excel hasil peramalan: kolom prediksi diberi satuan.
   Berkas: `HasilPeramalanExport.php`.
-- [ ] **C13.** Detail resep: tombol "Ubah resep" hanya tampil untuk Admin dan Produksi.
+- [x] **C13.** Detail resep: tombol "Ubah resep" hanya tampil untuk Admin dan Produksi.
   Berkas: `produksi/bom/show.blade.php`. Selesai bila: Pimpinan tidak melihat tombol yang berujung 403.
 
 ### D. Masukan UX ringan

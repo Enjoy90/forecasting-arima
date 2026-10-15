@@ -55,9 +55,9 @@ class LaporanProduksiController extends LaporanController
             $p->no_produksi,
             $p->tahapan?->nama_tahapan ?? '-',
             $p->barangOutput?->nama_barang ?? '-',
-            rtrim(rtrim(number_format((float) $p->jumlah_target, 2, ',', '.'), '0'), ','),
-            rtrim(rtrim(number_format((float) $p->jumlah_hasil, 2, ',', '.'), '0'), ','),
-            rtrim(rtrim(number_format((float) $p->jumlah_gagal, 2, ',', '.'), '0'), ','),
+            rtrim(rtrim(number_format((float) $p->jumlah_target, 2, ',', '.'), '0'), ',').' '.($p->barangOutput?->satuan ?? ''),
+            rtrim(rtrim(number_format((float) $p->jumlah_hasil, 2, ',', '.'), '0'), ',').' '.($p->barangOutput?->satuan ?? ''),
+            rtrim(rtrim(number_format((float) $p->jumlah_gagal, 2, ',', '.'), '0'), ',').' '.($p->barangOutput?->satuan ?? ''),
             number_format($p->persen_gagal, 2, ',', '.').'%',
         ])->values()->all();
 
@@ -71,8 +71,8 @@ class LaporanProduksiController extends LaporanController
             'perataan' => [4 => 'right', 5 => 'right', 6 => 'right', 7 => 'right'],
             'ringkasan' => [
                 'Jumlah perintah selesai' => number_format($perintah->count(), 0, ',', '.'),
-                'Total unit jadi' => number_format($totalHasil, 0, ',', '.').' unit',
-                'Total unit gagal' => number_format($totalGagal, 0, ',', '.').' unit',
+                'Total hasil jadi' => $this->totalPerSatuan($perintah, fn ($p) => $p->jumlah_hasil, fn ($p) => $p->barangOutput?->satuan),
+                'Total gagal' => $this->totalPerSatuan($perintah, fn ($p) => $p->jumlah_gagal, fn ($p) => $p->barangOutput?->satuan),
                 'Rata-rata tingkat gagal' => $totalDikerjakan > 0
                     ? number_format($totalGagal / $totalDikerjakan * 100, 2, ',', '.').'%'
                     : '0%',

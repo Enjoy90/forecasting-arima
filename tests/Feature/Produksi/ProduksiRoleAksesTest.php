@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Produksi;
 
+use App\Models\Barang;
+use App\Models\Bom;
 use App\Models\TahapanProduksi;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,6 +38,21 @@ class ProduksiRoleAksesTest extends TestCase
 
         $this->actingAs($pimpinan)->get(route('produksi.bom.index'))->assertOk();
         $this->actingAs($pimpinan)->get(route('produksi.bom.create'))->assertForbidden();
+    }
+
+    public function test_tombol_ubah_resep_hanya_untuk_admin_dan_produksi(): void
+    {
+        // [C13] pimpinan tidak melihat tombol yang berujung 403.
+        $bom = Bom::create([
+            'kode_bom' => 'BOM-LIHAT', 'nama_bom' => 'Resep Lihat',
+            'barang_id' => Barang::factory()->barangJadi()->create()->id,
+            'tahapan_id' => TahapanProduksi::factory()->create()->id, 'jumlah_output' => 1, 'is_aktif' => true,
+        ]);
+
+        $this->actingAs($this->pengguna(User::ROLE_PIMPINAN))->get(route('produksi.bom.show', $bom))
+            ->assertOk()->assertDontSee('Ubah resep');
+        $this->actingAs($this->pengguna(User::ROLE_PRODUKSI))->get(route('produksi.bom.show', $bom))
+            ->assertOk()->assertSee('Ubah resep');
     }
 
     public function test_admin_dan_produksi_penuh_akses_bom(): void

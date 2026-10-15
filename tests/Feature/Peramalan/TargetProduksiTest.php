@@ -126,4 +126,27 @@ class TargetProduksiTest extends TestCase
             ->assertOk()
             ->assertSee('Kebutuhan Bahan Baku');
     }
+
+    public function test_parameter_bukan_angka_diabaikan(): void
+    {
+        // [C5] ?target[]=1 dan ?barang[]=1 dulu galat 500.
+        $this->actingAs($this->pengguna())
+            ->get(route('peramalan.target.index').'?target[]=1&barang[]=1')
+            ->assertOk();
+
+        $this->actingAs($this->pengguna())
+            ->get(route('peramalan.target.index', ['target' => 'abc', 'barang' => 'xyz']))
+            ->assertOk();
+    }
+
+    public function test_pesan_hitung_memakai_satuan_barang(): void
+    {
+        // [C9] pesan berisi satuan barang, bukan "unit".
+        ['barangJadi' => $barangJadi] = $this->skenario();
+        $barangJadi->update(['satuan' => 'Dz']);
+
+        $this->actingAs($this->pengguna())
+            ->post(route('peramalan.target.hitung'), ['barang_id' => $barangJadi->id, 'periode' => '2026-06'])
+            ->assertSessionHas('sukses', fn ($pesan) => str_contains($pesan, ' Dz') && ! str_contains($pesan, 'unit'));
+    }
 }

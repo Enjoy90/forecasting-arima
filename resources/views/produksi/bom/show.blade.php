@@ -102,7 +102,9 @@
         </div>
 
         <div class="bg-white shadow-sm sm:rounded-lg p-6 flex flex-wrap items-center gap-4">
-            <a href="{{ route('produksi.bom.edit', $bom) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Ubah resep</a>
+            @if (in_array(auth()->user()?->role, ['admin', 'produksi'], true))
+                <a href="{{ route('produksi.bom.edit', $bom) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Ubah resep</a>
+            @endif
 
             @if ($bom->tahapan)
                 <a href="{{ route('produksi.perintah.index', $bom->tahapan->kode_tahapan) }}"

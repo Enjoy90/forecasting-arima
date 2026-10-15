@@ -49,18 +49,44 @@ class TahapanProduksiCrudTest extends TestCase
         $this->assertLessThan(strpos($isi, 'Proses Coating'), strpos($isi, 'Produksi Handle'));
     }
 
-    public function test_total_waktu_produksi_menjumlahkan_tahapan_aktif_saja(): void
+    public function test_ringkasan_memakai_jalur_resep_dan_kapasitas_setara(): void
+    {
+        // Komponen 120 pcs/hari, pengemasan 20 dz/hari, 1 dz butuh 12 komponen.
+        // Setara barang jadi: komponen 120 / 12 = 10 dz/hari, jadi komponen yang menghambat
+        // walaupun angka kapasitasnya lebih besar. Dari nol: komponen 1 hari + kemas 1 hari = 2.
+        $tahapKomponen = TahapanProduksi::factory()->create(['urutan' => 1, 'nama_tahapan' => 'Tahap Komponen', 'waktu_proses_hari' => 1, 'kapasitas_per_hari' => 120]);
+        $tahapKemas = TahapanProduksi::factory()->create(['urutan' => 2, 'nama_tahapan' => 'Tahap Kemas', 'waktu_proses_hari' => 1, 'kapasitas_per_hari' => 20]);
+        TahapanProduksi::factory()->nonaktif()->create(['urutan' => 3, 'waktu_proses_hari' => 10]);
+
+        $jadi = Barang::factory()->barangJadi()->create(['satuan' => 'Dz']);
+        $komponen = Barang::factory()->setengahJadi()->create(['satuan' => 'Pcs']);
+        $bahan = Barang::factory()->create();
+        $bomKomponen = Bom::create(['kode_bom' => 'BOM-K', 'nama_bom' => 'Komponen', 'barang_id' => $komponen->id, 'tahapan_id' => $tahapKomponen->id, 'jumlah_output' => 1, 'is_aktif' => true]);
+        $bomKomponen->detail()->create(['barang_id' => $bahan->id, 'jumlah_kebutuhan' => 1, 'persen_susut' => 0, 'satuan' => 'Pcs']);
+        $bomJadi = Bom::create(['kode_bom' => 'BOM-J', 'nama_bom' => 'Kemas', 'barang_id' => $jadi->id, 'tahapan_id' => $tahapKemas->id, 'jumlah_output' => 1, 'is_aktif' => true]);
+        $bomJadi->detail()->create(['barang_id' => $komponen->id, 'jumlah_kebutuhan' => 12, 'persen_susut' => 0, 'satuan' => 'Pcs']);
+
+        $response = $this->actingAs($this->pengguna())
+            ->get(route('master.tahapan-produksi.index'))
+            ->assertOk()
+            ->assertViewHas('lamaDariNol', 2.0)
+            ->assertSee('Tahap Komponen')
+            ->assertSee('120 Pcs');
+
+        $penghambat = $response->viewData('penghambat');
+        $this->assertSame($tahapKomponen->id, $penghambat['tahapan']->id);
+        $this->assertEqualsWithDelta(10.0, $penghambat['setara'], 1e-9);
+    }
+
+    public function test_ringkasan_kosong_bila_belum_ada_resep(): void
     {
         TahapanProduksi::factory()->create(['urutan' => 1, 'waktu_proses_hari' => 1]);
-        TahapanProduksi::factory()->create(['urutan' => 2, 'waktu_proses_hari' => 2]);
-        TahapanProduksi::factory()->nonaktif()->create(['urutan' => 3, 'waktu_proses_hari' => 10]);
 
         $this->actingAs($this->pengguna())
             ->get(route('master.tahapan-produksi.index'))
             ->assertOk()
-            // 1 + 2 = 3 hari; tahapan nonaktif 10 hari tidak ikut dihitung.
-            ->assertViewHas('totalWaktuProses', 3.0)
-            ->assertViewHas('jumlahTahapanAktif', 2);
+            ->assertViewHas('lamaDariNol', null)
+            ->assertSee('Belum ada resep');
     }
 
     public function test_tahapan_baru_tersimpan_dengan_kode_huruf_kapital(): void

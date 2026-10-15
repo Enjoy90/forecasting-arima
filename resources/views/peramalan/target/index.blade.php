@@ -156,7 +156,7 @@
                                 @foreach ($kebutuhanSetengahJadi as $sj)
                                     <tr>
                                         <td class="px-3 py-2 border-b">{{ $sj['kode_barang'] }} - {{ $sj['nama_barang'] }}</td>
-                                        <td class="px-3 py-2 border-b text-right">{{ number_format($sj['jumlah'], 0, ',', '.') }} {{ $sj['satuan'] }}</td>
+                                        <td class="px-3 py-2 border-b text-right">{{ number_format(ceil(round($sj['jumlah'], 6)), 0, ',', '.') }} {{ $sj['satuan'] }}</td>
                                         <td class="px-3 py-2 border-b text-right">{{ number_format($sj['stok_tersedia'], 0, ',', '.') }} {{ $sj['satuan'] }}</td>
                                     </tr>
                                 @endforeach

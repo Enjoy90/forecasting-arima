@@ -27,40 +27,53 @@
             </div>
         @endif
 
-        {{-- Ringkasan ini adalah angka yang dipakai Modul B sebagai L_produksi.
-             Ditampilkan supaya salah ketik pada waktu proses langsung terlihat. --}}
+        {{-- Ringkasan dihitung dengan rumus waktu tunggu yang sama dengan menu Peramalan
+             (docs/01 §4.2), supaya salah ketik waktu proses atau kapasitas langsung terlihat. --}}
         <div class="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white shadow-sm sm:rounded-lg p-4">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Waktu Produksi</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Waktu Produksi dari Nol</p>
                 <p class="mt-1 text-2xl font-semibold text-gray-900">
-                    {{ rtrim(rtrim(number_format($totalWaktuProses, 2, ',', '.'), '0'), ',') }}
-                    <span class="text-base font-normal text-gray-500">hari</span>
+                    @if ($lamaDariNol !== null)
+                        {{ rtrim(rtrim(number_format($lamaDariNol, 2, ',', '.'), '0'), ',') }}
+                        <span class="text-base font-normal text-gray-500">hari kerja</span>
+                    @else
+                        <span class="text-base font-normal text-gray-500">Belum ada resep</span>
+                    @endif
                 </p>
                 <p class="mt-1 text-xs text-gray-500">
-                    Jumlah waktu proses {{ $jumlahTahapanAktif }} tahapan aktif (L<sub>produksi</sub>)
+                    @if ($acuan)
+                        Jalur terpanjang resep {{ $acuan->kode_barang }} untuk pesanan kecil. Tahap di cabang berbeda berjalan bersamaan.
+                    @else
+                        Belum ada barang jadi dengan resep aktif.
+                    @endif
                 </p>
             </div>
 
             <div class="bg-white shadow-sm sm:rounded-lg p-4">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Kapasitas Tersempit</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Tahap Penghambat</p>
                 <p class="mt-1 text-2xl font-semibold text-gray-900">
-                    @if ($kapasitasTersempit)
-                        {{ number_format((float) $kapasitasTersempit, 0, ',', '.') }}
-                        <span class="text-base font-normal text-gray-500">unit/hari</span>
+                    @if ($penghambat)
+                        {{ $penghambat['tahapan']->nama_tahapan }}
                     @else
                         <span class="text-base font-normal text-gray-500">Tidak dibatasi</span>
                     @endif
                 </p>
                 <p class="mt-1 text-xs text-gray-500">
-                    {{ $namaTersempit ? 'Penentu laju rantai: '.$namaTersempit : 'Belum ada tahapan berkapasitas' }}
+                    @if ($penghambat)
+                        {{ number_format((float) $penghambat['tahapan']->kapasitas_per_hari, 0, ',', '.') }}
+                        {{ $satuanTahapan[$penghambat['tahapan']->id] ?? 'unit' }} per hari,
+                        setara {{ number_format($penghambat['setara'], 0, ',', '.') }} {{ $acuan->satuan }} {{ $acuan->kode_barang }} per hari.
+                    @else
+                        Belum ada tahapan berkapasitas pada resep acuan.
+                    @endif
                 </p>
             </div>
 
             <div class="bg-white shadow-sm sm:rounded-lg p-4">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Catatan</p>
                 <p class="mt-1 text-sm text-gray-600 leading-relaxed">
-                    Sistem menjumlahkan seluruh tahapan secara berurutan. Bila di lapangan ada tahapan yang
-                    dikerjakan paralel, angka ini lebih besar dari kenyataan &mdash; sengaja konservatif.
+                    Untuk jumlah besar, lama produksi = waktu dari nol + hari tambahan dari tahap penghambat.
+                    Hitungan lengkap per pesanan ada di menu Peramalan, Waktu Tunggu.
                 </p>
             </div>
         </div>
@@ -121,7 +134,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-center text-gray-600">
                                     @if ((float) $item->kapasitas_per_hari > 0)
-                                        {{ number_format((float) $item->kapasitas_per_hari, 0, ',', '.') }} unit
+                                        {{ number_format((float) $item->kapasitas_per_hari, 0, ',', '.') }} {{ $satuanTahapan[$item->id] ?? 'unit' }}
                                     @else
                                         <span class="text-gray-400" title="Kapasitas tidak dibatasi, tidak menambah hari">tidak dibatasi</span>
                                     @endif

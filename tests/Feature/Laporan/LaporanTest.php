@@ -188,4 +188,57 @@ class LaporanTest extends TestCase
             ->get(route('laporan.pembelian', ['dari' => '2020-01-01', 'sampai' => '2020-01-31', 'unduh' => 'excel']))
             ->assertOk();
     }
+
+    public function test_tanggal_tidak_valid_memakai_rentang_bawaan(): void
+    {
+        // [C6] /laporan/penjualan?dari=abc dulu galat 500.
+        foreach ($this->rute() as $rute) {
+            $this->actingAs($this->pengguna())
+                ->get(route($rute, ['dari' => 'abc', 'sampai' => '2026-13-45']))
+                ->assertOk();
+            $this->actingAs($this->pengguna())
+                ->get(route($rute).'?dari[]=1')
+                ->assertOk();
+        }
+    }
+
+    public function test_total_penjualan_ditulis_dengan_satuan_barang(): void
+    {
+        // [C10] total terjual memakai dz, bukan "unit".
+        $barang = Barang::factory()->barangJadi()->create(['satuan' => 'Dz']);
+        $faktur = Penjualan::create([
+            'no_faktur' => 'FJ-DZ', 'tanggal_penjualan' => '2026-09-15',
+            'pelanggan_id' => Pelanggan::factory()->create()->id, 'total_harga' => 816000,
+        ]);
+        $faktur->detail()->create(['barang_id' => $barang->id, 'jumlah' => 2, 'harga_satuan' => 408000, 'subtotal' => 816000]);
+
+        $response = $this->actingAs($this->pengguna())
+            ->get(route('laporan.penjualan', ['dari' => '2026-09-01', 'sampai' => '2026-09-30']))
+            ->assertOk();
+
+        $this->assertSame('2 Dz', $response->viewData('laporan')['ringkasan']['Total terjual']);
+    }
+
+    public function test_total_produksi_dipisah_per_satuan(): void
+    {
+        // [C11] pcs dan dz tidak dijumlahkan jadi satu angka.
+        $tahapan = TahapanProduksi::factory()->create(['urutan' => 1]);
+        $kepala = Barang::factory()->setengahJadi()->create(['satuan' => 'Pcs']);
+        $sekop = Barang::factory()->barangJadi()->create(['satuan' => 'Dz']);
+
+        foreach ([['PRD-PCS', $kepala, 1200], ['PRD-DZ', $sekop, 80]] as [$nomor, $barang, $hasil]) {
+            Produksi::create([
+                'no_produksi' => $nomor, 'tanggal_produksi' => '2026-09-10',
+                'tahapan_id' => $tahapan->id, 'barang_output_id' => $barang->id,
+                'jumlah_target' => $hasil, 'jumlah_hasil' => $hasil, 'jumlah_gagal' => 0,
+                'status' => Produksi::STATUS_SELESAI,
+            ]);
+        }
+
+        $response = $this->actingAs($this->pengguna())
+            ->get(route('laporan.produksi', ['dari' => '2026-09-01', 'sampai' => '2026-09-30']))
+            ->assertOk();
+
+        $this->assertSame('80 Dz, 1.200 Pcs', $response->viewData('laporan')['ringkasan']['Total hasil jadi']);
+    }
 }

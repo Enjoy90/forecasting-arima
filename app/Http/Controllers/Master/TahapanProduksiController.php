@@ -4,23 +4,26 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\TahapanProduksiRequest;
+use App\Models\Barang;
+use App\Models\Bom;
 use App\Models\LogAktivitas;
 use App\Models\TahapanProduksi;
+use App\Services\Produksi\BomExploder;
+use App\Services\Produksi\LeadTimeCalculator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use RuntimeException;
 
 /**
  * CRUD master tahapan produksi (5 tahapan pembuatan sekop).
  *
  * Halaman ini terlihat sederhana, tetapi isinya adalah bahan mentah
- * perhitungan waktu tunggu operasional pabrik yang dipakai Modul B:
- *
- *   Hari tahapan-i = waktu_proses_hari + ( CEIL(target / kapasitas_per_hari) - 1 )
- *   L_produksi     = SUM( Hari tahapan-i )
- *
- * Karena itu daftar di sini menampilkan sekaligus total L_produksi dari
- * seluruh tahapan yang aktif, supaya salah ketik angka langsung kelihatan.
+ * perhitungan waktu tunggu operasional pabrik (docs/01 §4.2, docs/07).
+ * Ringkasannya dihitung dengan LeadTimeCalculator yang sama dengan menu
+ * Peramalan, memakai resep produk jadi pertama sebagai acuan: lama produksi
+ * dari nol dan tahap penghambat (kapasitas terkecil setelah disetarakan ke
+ * barang jadi), supaya salah ketik angka langsung kelihatan.
  *
  * Catatan penghapusan:
  * bom.tahapan_id dan produksi.tahapan_id memakai restrictOnDelete, jadi
@@ -50,22 +53,55 @@ class TahapanProduksiController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Ringkasan dihitung dari SELURUH tahapan aktif, bukan hanya yang
-        // tampil di halaman ini, karena angkanya mewakili satu rantai produksi utuh.
-        $tahapanAktif = TahapanProduksi::where('is_aktif', true)->orderBy('urutan')->get();
+        // Satuan kapasitas tiap tahapan = satuan barang hasil resepnya (pcs atau dz).
+        $satuanTahapan = Bom::with('barang:id,satuan')->get()
+            ->groupBy('tahapan_id')
+            ->map(fn ($daftar) => $daftar->first()->barang?->satuan);
 
         return view('master.tahapan-produksi.index', [
             'tahapan' => $tahapan,
             'cari' => $cari,
             'status' => $status,
-            'totalWaktuProses' => (float) $tahapanAktif->sum('waktu_proses_hari'),
-            'jumlahTahapanAktif' => $tahapanAktif->count(),
-            // Kapasitas terkecil menjadi penentu laju seluruh rantai produksi.
-            'kapasitasTersempit' => $tahapanAktif->where('kapasitas_per_hari', '>', 0)->min('kapasitas_per_hari'),
-            'namaTersempit' => $tahapanAktif->where('kapasitas_per_hari', '>', 0)
-                ->sortBy('kapasitas_per_hari')
-                ->first()?->nama_tahapan,
-        ]);
+            'satuanTahapan' => $satuanTahapan,
+        ] + $this->ringkasan());
+    }
+
+    /**
+     * Lama produksi dari nol dan tahap penghambat, dihitung dari resep produk
+     * jadi pertama yang punya BOM aktif.
+     *
+     * @return array<string, mixed>
+     */
+    private function ringkasan(): array
+    {
+        $acuan = Barang::diramalkan()->aktif()->orderBy('kode_barang')->get()
+            ->first(fn (Barang $b) => $b->bomAktif() !== null);
+
+        if ($acuan === null) {
+            return ['acuan' => null, 'lamaDariNol' => null, 'penghambat' => null];
+        }
+
+        try {
+            $lamaDariNol = (new LeadTimeCalculator())->hitung($acuan, 1, null, [], false)['lead_time_produksi_hari'];
+            $perUnit = collect((new BomExploder())->ledakkan($acuan, 1)['tahapan'])->pluck('jumlah', 'tahapan_id');
+        } catch (RuntimeException) {
+            return ['acuan' => $acuan, 'lamaDariNol' => null, 'penghambat' => null];
+        }
+
+        // Kapasitas disetarakan ke barang jadi: 780 kepala per hari dibagi kebutuhan
+        // kepala per 1 dz, supaya tahap bersatuan pcs dan dz bisa dibandingkan.
+        $penghambat = TahapanProduksi::where('is_aktif', true)
+            ->whereIn('id', $perUnit->keys())
+            ->where('kapasitas_per_hari', '>', 0)
+            ->get()
+            ->map(fn (TahapanProduksi $t) => [
+                'tahapan' => $t,
+                'setara' => (float) $t->kapasitas_per_hari / (float) $perUnit[$t->id],
+            ])
+            ->sortBy('setara')
+            ->first();
+
+        return ['acuan' => $acuan, 'lamaDariNol' => $lamaDariNol, 'penghambat' => $penghambat];
     }
 
     public function create(): View

@@ -103,4 +103,45 @@ class WaktuTungguTest extends TestCase
 
         $response->assertSessionHasErrors(['jumlah', 'awal_periode', 'periksa_stok']);
     }
+
+    public function test_jumlah_harus_bilangan_bulat_satu_sampai_seratus_ribu(): void
+    {
+        // [C4] angka raksasa dulu menghasilkan tanggal tahun -58129.
+        $barang = $this->barangDenganBom();
+
+        foreach (['1000000000', '1e400', '0.01', '0', '2.5'] as $nilai) {
+            $this->actingAs($this->pengguna())
+                ->post(route('peramalan.waktu-tunggu.hitung'), [
+                    'jumlah' => [$barang->id => $nilai],
+                    'awal_periode' => '2026-11-01',
+                    'periksa_stok' => '1',
+                ])
+                ->assertSessionHasErrors('jumlah.'.$barang->id);
+        }
+    }
+
+    public function test_rincian_jumlah_dibulatkan_ke_atas(): void
+    {
+        // [C7] resep 1 barang butuh 1,01 bahan; 24 barang -> 24,24 bahan tampil 25.
+        $tahapan = TahapanProduksi::factory()->create(['waktu_proses_hari' => 1, 'kapasitas_per_hari' => 1000]);
+        $barangJadi = Barang::factory()->barangJadi()->create();
+        $bahan = Barang::factory()->create(['lead_time_hari' => 3, 'stok_tersedia' => 0, 'satuan' => 'Pcs']);
+        $bom = Bom::create([
+            'kode_bom' => 'BOM-BULAT', 'nama_bom' => 'Resep', 'barang_id' => $barangJadi->id,
+            'tahapan_id' => $tahapan->id, 'jumlah_output' => 1, 'is_aktif' => true,
+        ]);
+        $bom->detail()->create(['barang_id' => $bahan->id, 'jumlah_kebutuhan' => 1.01, 'persen_susut' => 0, 'satuan' => 'Pcs']);
+
+        $this->actingAs($this->pengguna())
+            ->followingRedirects()
+            ->from(route('peramalan.waktu-tunggu.index'))
+            ->post(route('peramalan.waktu-tunggu.hitung'), [
+                'jumlah' => [$barangJadi->id => 24],
+                'awal_periode' => '2026-11-01',
+                'periksa_stok' => '1',
+            ])
+            ->assertOk()
+            ->assertSee('25 Pcs')
+            ->assertDontSee('24,24');
+    }
 }

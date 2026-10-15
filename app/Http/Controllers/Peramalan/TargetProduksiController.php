@@ -26,7 +26,7 @@ class TargetProduksiController extends Controller
     {
         $daftarBarang = Barang::diramalkan()->aktif()->orderBy('kode_barang')->get();
 
-        $barangId = $request->query('barang');
+        $barangId = $this->idDariQuery($request, 'barang');
         $periodeForecast = collect();
         if ($barangId) {
             $peramalanTerbaru = Peramalan::where('barang_id', $barangId)->latest()->first();
@@ -38,7 +38,7 @@ class TargetProduksiController extends Controller
             }
         }
 
-        $targetId = $request->query('target');
+        $targetId = $this->idDariQuery($request, 'target');
         $detail = $targetId
             ? TargetProduksi::with(['barang', 'kebutuhanBahan.barang'])->find($targetId)
             : null;
@@ -69,6 +69,17 @@ class TargetProduksiController extends Controller
         ]);
     }
 
+    /**
+     * Id dari query string; nilai yang bukan bilangan bulat positif (larik,
+     * teks) dianggap tidak diisi supaya halaman tidak galat.
+     */
+    private function idDariQuery(Request $request, string $kunci): ?int
+    {
+        $nilai = $request->query($kunci);
+
+        return is_string($nilai) && ctype_digit($nilai) && (int) $nilai > 0 ? (int) $nilai : null;
+    }
+
     public function hitung(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -87,14 +98,16 @@ class TargetProduksiController extends Controller
             return back()->with('gagal', $e->getMessage());
         }
 
+        $jumlah = number_format((float) $target->jumlah_target_produksi, 0, ',', '.').' '.$peramalan->barang->satuan;
+
         LogAktivitas::catat(
             self::MODUL,
-            "Menghitung target produksi {$peramalan->barang->nama_barang} periode {$data['periode']}: {$target->jumlah_target_produksi} unit"
+            "Menghitung target produksi {$peramalan->barang->nama_barang} periode {$data['periode']}: {$jumlah}"
         );
 
         return redirect()
             ->route('peramalan.target.index', ['barang' => $data['barang_id'], 'target' => $target->id])
-            ->with('sukses', "Target produksi dihitung: {$target->jumlah_target_produksi} unit ({$target->status_stok}).");
+            ->with('sukses', "Target produksi dihitung: {$jumlah} ({$target->status_stok}).");
     }
 
     public function setujui(TargetProduksi $target): RedirectResponse

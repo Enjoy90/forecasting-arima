@@ -11,7 +11,7 @@ use Illuminate\Support\Carbon;
  * Laporan Penjualan — penjualan per baris barang.
  *
  * Laporan ini juga menjadi bahan pemeriksaan silang bagi Modul B: angka total
- * unit di sini harus cocok dengan deret waktu yang diramalkan ARIMA untuk
+ * terjual di sini harus cocok dengan deret waktu yang diramalkan ARIMA untuk
  * rentang yang sama.
  */
 class LaporanPenjualanController extends LaporanController
@@ -61,7 +61,7 @@ class LaporanPenjualanController extends LaporanController
             'perataan' => [5 => 'right', 6 => 'right', 7 => 'right'],
             'ringkasan' => [
                 'Jumlah faktur' => number_format($baris->pluck('penjualan_id')->unique()->count(), 0, ',', '.'),
-                'Total unit terjual' => number_format((float) $baris->sum('jumlah'), 0, ',', '.').' unit',
+                'Total terjual' => $this->totalPerSatuan($baris, fn ($d) => $d->jumlah, fn ($d) => $d->barang?->satuan),
                 'Total nilai penjualan' => 'Rp '.number_format((float) $baris->sum('subtotal'), 0, ',', '.'),
             ],
         ];

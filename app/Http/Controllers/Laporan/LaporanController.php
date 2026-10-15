@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Laporan;
 use App\Exports\LaporanExport;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -84,13 +86,11 @@ abstract class LaporanController extends Controller
      */
     protected function rentang(Request $request): array
     {
-        $dari = $request->query('dari')
-            ? Carbon::parse($request->query('dari'))->startOfDay()
-            : Carbon::now()->startOfMonth();
+        $dari = $this->tanggalDariQuery($request, 'dari')?->startOfDay()
+            ?? Carbon::now()->startOfMonth();
 
-        $sampai = $request->query('sampai')
-            ? Carbon::parse($request->query('sampai'))->endOfDay()
-            : Carbon::now()->endOfDay();
+        $sampai = $this->tanggalDariQuery($request, 'sampai')?->endOfDay()
+            ?? Carbon::now()->endOfDay();
 
         // Rentang terbalik dibetulkan diam-diam daripada menolak permintaan;
         // maksud penggunanya tetap jelas.
@@ -99,6 +99,47 @@ abstract class LaporanController extends Controller
         }
 
         return [$dari, $sampai];
+    }
+
+    /**
+     * Tanggal dari query string. Isian yang bukan tanggal (teks acak, larik)
+     * dianggap kosong sehingga laporan memakai rentang bawaan.
+     */
+    private function tanggalDariQuery(Request $request, string $kunci): ?Carbon
+    {
+        $nilai = $request->query($kunci);
+        if (! is_string($nilai) || trim($nilai) === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($nilai);
+        } catch (InvalidFormatException) {
+            return null;
+        }
+    }
+
+    /**
+     * Total jumlah yang dipisah per satuan, misalnya "120 Dz" atau
+     * "1.200 Pcs, 80 Dz", supaya pcs dan dz tidak dijumlahkan jadi satu angka.
+     *
+     * @param  callable(mixed): float  $jumlah
+     * @param  callable(mixed): ?string  $satuan
+     */
+    protected function totalPerSatuan(Collection $baris, callable $jumlah, callable $satuan): string
+    {
+        $total = $baris
+            ->groupBy(fn ($b) => $satuan($b) ?: '-')
+            ->map(fn (Collection $kelompok) => $kelompok->sum(fn ($b) => (float) $jumlah($b)))
+            ->sortKeys();
+
+        if ($total->isEmpty()) {
+            return '0';
+        }
+
+        return $total
+            ->map(fn ($nilai, $nama) => number_format($nilai, 0, ',', '.').' '.$nama)
+            ->implode(', ');
     }
 
     private function pdf(array $data): Response

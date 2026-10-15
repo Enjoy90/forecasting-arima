@@ -32,7 +32,9 @@ class HasilPeramalanExport implements FromCollection, WithHeadings, WithMapping,
      */
     public function headings(): array
     {
-        return ['periode', 'prediksi', 'batas_bawah_95', 'batas_atas_95'];
+        $satuan = $this->peramalan->barang?->satuan ?? 'unit';
+
+        return ['periode', "prediksi ({$satuan})", "batas_bawah_95 ({$satuan})", "batas_atas_95 ({$satuan})"];
     }
 
     /**

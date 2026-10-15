@@ -8,6 +8,9 @@
 
     @php
         $angka = fn ($x, $d = 0) => number_format((float) $x, $d, ',', '.');
+        // Barang tidak bisa dibuat sebagian, jadi jumlah dibulatkan ke atas.
+        // round() dulu supaya sisa pembagian 24,0000001 tidak menjadi 25.
+        $bulatAtas = fn ($x) => number_format(ceil(round((float) $x, 6)), 0, ',', '.');
     @endphp
 
     <div class="max-w-5xl space-y-4">
@@ -39,7 +42,7 @@
                                 @foreach ($daftarBarang as $b)
                                     <div class="flex items-center gap-3">
                                         <label for="jumlah_{{ $b->id }}" class="flex-1 text-sm text-gray-700">{{ $b->kode_barang }} - {{ $b->nama_barang }}</label>
-                                        <x-text-input id="jumlah_{{ $b->id }}" name="jumlah[{{ $b->id }}]" type="number" step="0.01" min="0"
+                                        <x-text-input id="jumlah_{{ $b->id }}" name="jumlah[{{ $b->id }}]" type="number" step="1" min="1" max="100000"
                                                       value="{{ old('jumlah.'.$b->id) }}" class="w-28 text-sm" />
                                         <span class="w-8 text-sm text-gray-500">{{ $b->satuan }}</span>
                                     </div>
@@ -128,7 +131,7 @@
                             @foreach ($hasil['rincian_tahapan'] as $t)
                                 <tr @class(['font-semibold' => $t['hari_kapasitas'] === $hasil['hari_tahap_terlama']])>
                                     <td class="px-3 py-2 border-b">{{ $t['kode_tahapan'] }} {{ $t['nama_tahapan'] }}</td>
-                                    <td class="px-3 py-2 border-b text-right">{{ $angka($t['jumlah']) }} {{ $t['satuan'] }}</td>
+                                    <td class="px-3 py-2 border-b text-right">{{ $bulatAtas($t['jumlah']) }} {{ $t['satuan'] }}</td>
                                     <td class="px-3 py-2 border-b text-right">{{ $angka($t['kapasitas_per_hari']) }} {{ $t['satuan'] }}</td>
                                     <td class="px-3 py-2 border-b text-right">{{ $angka($t['waktu_proses_hari']) }} hari</td>
                                     <td class="px-3 py-2 border-b text-right">{{ $t['hari_kapasitas'] }} hari</td>
@@ -156,7 +159,7 @@
                                 @foreach ($hasil['bahan_kurang'] as $b)
                                     <tr>
                                         <td class="px-3 py-2 border-b">{{ $b['kode_barang'] }} - {{ $b['nama_barang'] }}</td>
-                                        <td class="px-3 py-2 border-b text-right">{{ $angka($b['kebutuhan'], 2) }} {{ $b['satuan'] }}</td>
+                                        <td class="px-3 py-2 border-b text-right">{{ $bulatAtas($b['kebutuhan']) }} {{ $b['satuan'] }}</td>
                                         <td class="px-3 py-2 border-b text-right">{{ $angka($b['stok_tersedia'], 2) }} {{ $b['satuan'] }}</td>
                                         <td class="px-3 py-2 border-b text-right">{{ $angka($b['lead_time_hari']) }} hari</td>
                                     </tr>
