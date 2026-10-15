@@ -107,6 +107,11 @@ class TargetProduksiPlanner
     {
         $beban = [];
         foreach (Barang::diramalkan()->aktif()->where('id', '!=', $barang->id)->get() as $lain) {
+            // Produk tanpa resep aktif tidak bisa dihitung bebannya; dilewati supaya
+            // tidak menggagalkan rencana produk yang sedang dihitung.
+            if ($lain->bomAktif() === null) {
+                continue;
+            }
             $peramalan = Peramalan::where('barang_id', $lain->id)->latest('id')->first();
             $nilai = $peramalan?->hasil()->where('tipe', 'forecast')->where('periode', $periode)->value('nilai_prediksi');
             if ($nilai !== null && (float) $nilai > 0) {

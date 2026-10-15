@@ -171,4 +171,26 @@ class TargetProduksiPlannerTest extends TestCase
         $this->assertDatabaseCount('target_produksi', 1);
         $this->assertCount(1, $kedua->kebutuhanBahan);
     }
+
+    public function test_produk_lain_tanpa_resep_aktif_tidak_menggagalkan_target(): void
+    {
+        // [K] produk lain punya prakiraan periode yang sama, tetapi tidak punya resep aktif.
+        ['peramalan' => $peramalan] = $this->skenario();
+        $tanpaResep = Barang::factory()->barangJadi()->create();
+        $peramalanLain = Peramalan::create([
+            'kode_peramalan' => 'PRM-UJI-'.uniqid(),
+            'barang_id' => $tanpaResep->id,
+            'periode_awal' => '2024-01', 'periode_akhir' => '2026-05', 'jumlah_data' => 29,
+            'ordo_p' => 1, 'ordo_d' => 0, 'ordo_q' => 0,
+            'sigma_kuadrat' => 100, 'horizon' => 3, 'status' => 'draft',
+        ]);
+        HasilPeramalan::create([
+            'peramalan_id' => $peramalanLain->id, 'periode' => '2026-06', 'urutan_t' => 30,
+            'tipe' => 'forecast', 'nilai_prediksi' => 40,
+        ]);
+
+        $target = (new TargetProduksiPlanner())->rencanakan($peramalan, '2026-06');
+
+        $this->assertEqualsWithDelta(9.0, (float) $target->lead_time_total_hari, 1e-6);
+    }
 }

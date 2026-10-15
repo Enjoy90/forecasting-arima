@@ -51,18 +51,21 @@ Rakit mulai sehari setelah coating, karena coating tidak bisa memenuhi satu hari
 Hari tahap-i   = PEMBULATAN_ATAS(jumlah di tahap-i / kapasitas tahap-i)
 Jalur kritis   = jalur BOM dengan jumlah waktu_proses terbesar
                  (kepala 1 + coating 1 + rakit 1 + kemas 0 = 3 hari)
-Tumpang tindih = 1 hari untuk setiap sambungan di jalur kritis yang boleh mulai di hari yang sama:
-                 kapasitas tahap sebelumnya >= kapasitas tahap ini, dan jumlahnya >= kapasitas tahap ini
+Tumpang tindih = 1 hari untuk setiap sambungan di jalur yang boleh mulai di hari yang sama:
+                 kapasitas tahap sebelumnya >= kapasitas tahap ini, dan jumlah di tahap ini
+                 (per tingkat pohon resep, semua produk) >= kapasitas tahap ini
+Jalur kritis dipilih dari jalur dengan (jumlah waktu_proses - tumpang tindih) terbesar.
 
 L_produksi = jalur kritis + (hari tahap terlama - 1) - tumpang tindih     [hari kerja]
-L_beli     = lead time terlama di antara bahan yang kebutuhannya melebihi stok (0 bila semua cukup)
+L_beli     = lead time terlama di antara bahan produk yang direncanakan yang total
+             kebutuhannya (semua produk di periode itu) melebihi stok (0 bila semua cukup)
 L_total    = L_beli + L_produksi
 
 Tanggal mulai produksi = awal periode penjualan mundur L_produksi hari kerja
 Tanggal pesan bahan    = tanggal mulai produksi mundur L_beli hari kalender
 ```
 
-Kapasitas dipakai bersama. Saat menghitung target produksi satu produk, beban di setiap tahap ikut menjumlahkan prakiraan produk lain untuk periode yang sama.
+Kapasitas dipakai bersama. Saat menghitung target produksi satu produk, beban di setiap tahap ikut menjumlahkan prakiraan produk lain untuk periode yang sama. Produk lain hanya memakai kapasitas: jalur kritis dan bahan yang harus dibeli tetap diambil dari produk yang direncanakan. Produk lain yang tidak punya resep aktif dilewati.
 
 Penyederhanaan yang disadari: kapasitas setiap tahap dihitung gabungan untuk semua produk, termasuk cetak kepala (1.200 pcs untuk semua jenis kepala), padahal di pabrik papak dan lancip punya lini sendiri. Ini lebih hati-hati dari kenyataan, tetapi tidak mengubah hasil karena cetak tidak pernah menjadi tahap terlama (1.200 lebih besar dari 780).
 
@@ -133,3 +136,90 @@ Contoh ini sama dengan simulasi di folder `simulasi/` yang sudah dicek Emi.
 ## 11. Catatan untuk Skripsi
 
 Revisi ini mengubah rumus waktu tunggu produksi di docs/01 bab 4.2. Alasannya: rumus lama mengasumsikan setiap tahap harus menyelesaikan seluruh target sebelum tahap berikutnya mulai, padahal di pabrik tahapan berjalan sambung-menyambung dan cetak kepala berjalan bersamaan dengan pembuatan handle. Data kapasitas dan urutan kerja diperoleh dari wawancara dengan pihak produksi pada 14 sampai 15 Oktober 2026.
+
+## 12. Perbaikan Hasil QA (15 Oktober 2026)
+
+Dua agent QA menguji commit `f781eea`: satu untuk logika perhitungan, satu untuk halaman, peran, dan satuan. Hak akses, contoh bagian 6, tanggal hari kerja, dan konsistensi data dz lolos.
+
+Setiap butir di bawah adalah **satu perubahan kecil**, dengan berkas yang disentuh dan syarat selesai yang bisa dicek. Kode kasus seperti [I] atau [B] merujuk ke skenario uji di laporan QA.
+
+### A. Bug tinggi pada rumus
+
+- [x] **A1.** `hitungGabungan` menerima daftar produk utama. Bahan yang kurang dan jalur kritis dihitung dari produk utama saja, kapasitas tetap dari semua produk.
+  Berkas: `LeadTimeCalculator.php`. Selesai bila: BJ-01 tidak lagi menunggu plat 1,6 ml milik Rees Q [I].
+- [x] **A2.** `hitung` meneruskan `$bebanLain` sebagai beban kapasitas saja.
+  Berkas: `LeadTimeCalculator.php`. Selesai bila: BJ-01 2 dz tetap 3 hari walaupun ada produk lain dengan tahap 10 hari [D].
+- [x] **A3.** `bebanProdukLain` melewati produk yang tidak punya resep aktif.
+  Berkas: `TargetProduksiPlanner.php`. Selesai bila: resep BJ-04 dinonaktifkan, target BJ-01 tetap terhitung [K].
+- [x] **A4.** Test untuk [I], [D], dan [K].
+  Berkas: `tests/Unit/Produksi/LeadTimeCalculatorTest.php`, `tests/Unit/Stok/TargetProduksiPlannerTest.php`.
+
+### B. Kasus tepi rumus (data pabrik saat ini tidak terkena)
+
+- [x] **B1.** Pohon resep menyimpan semua sambungan induk dan anak, bukan hanya induk pertama.
+  Berkas: `BomExploder.php`. Selesai bila: P butuh A dan B, A dan B butuh C, jalur kritis = 7 [B].
+- [x] **B2.** Jalur kritis dipilih dari lama produksi terbesar per jalur (tumpang tindih ikut dihitung), bukan urutan id.
+  Berkas: `LeadTimeCalculator.php`. Selesai bila: hasil [C] = 6 untuk urutan id mana pun.
+- [x] **B3.** Kapasitas tetap dihitung walaupun semua waktu proses 0.
+  Berkas: `LeadTimeCalculator.php`. Selesai bila: [G] = 99 hari.
+- [x] **B4.** Tumpang tindih memakai jumlah per level, bukan jumlah gabungan satu tahapan.
+  Berkas: `LeadTimeCalculator.php`. Selesai bila: [F] = 3 hari.
+- [x] **B5.** Test untuk [B], [C], [F], dan [G].
+  Berkas: `tests/Unit/Produksi/LeadTimeCalculatorTest.php`.
+
+### C. Halaman dan validasi
+
+- [ ] **C1.** Master Tahapan: ringkasan "Total Waktu Produksi" diganti jalur kritis dari nol (3 hari).
+  Berkas: `TahapanProduksiController.php`, `master/tahapan-produksi/index.blade.php`. Selesai bila: tampil 3 hari, bukan 4.
+- [ ] **C2.** Master Tahapan: "Kapasitas Tersempit" dibandingkan dalam satuan setara, sehingga penghambatnya coating 780 pcs, bukan pengemasan 80 dz.
+  Berkas: sama dengan C1. Selesai bila: penentu laju = Proses Coating.
+- [ ] **C3.** Master Tahapan: label kapasitas memakai satuan tiap tahap (pcs atau dz), dan catatan "dijumlahkan berurutan" dihapus.
+  Berkas: `master/tahapan-produksi/index.blade.php`.
+- [ ] **C4.** Waktu Tunggu: isian dz wajib bilangan bulat 1 sampai 100.000.
+  Berkas: `WaktuTungguController.php`. Selesai bila: 1.000.000.000, 1e400, dan 0,01 ditolak dengan pesan, bukan menghasilkan tanggal tahun -58129.
+- [ ] **C5.** Target: parameter `barang` dan `target` yang bukan angka diabaikan.
+  Berkas: `TargetProduksiController.php`. Selesai bila: `?target[]=1` dan `?barang[]=1` tidak galat 500.
+- [ ] **C6.** Laporan: tanggal filter yang tidak valid diabaikan.
+  Berkas: `LaporanController.php`. Selesai bila: `/laporan/penjualan?dari=abc` tidak galat 500.
+- [ ] **C7.** Rincian per tahap di Waktu Tunggu: jumlah pcs dibulatkan ke atas.
+  Berkas: `peramalan/waktu-tunggu/index.blade.php`. Selesai bila: 24,24 rakitan tampil 25.
+- [ ] **C8.** Tabel kebutuhan setengah jadi di Target: jumlah dibulatkan ke atas.
+  Berkas: `peramalan/target/index.blade.php`.
+- [ ] **C9.** Pesan dan log setelah hitung target memakai satuan barang, bukan "unit".
+  Berkas: `TargetProduksiController.php`.
+- [ ] **C10.** Laporan Penjualan: total ditulis dalam dz.
+  Berkas: view atau controller laporan penjualan. Selesai bila: "47.384 dz", bukan "unit".
+- [ ] **C11.** Laporan Produksi: total hasil dipisah per satuan, tidak menjumlahkan pcs dan dz.
+  Berkas: view atau controller laporan produksi.
+- [ ] **C12.** Excel hasil peramalan: kolom prediksi diberi satuan.
+  Berkas: `HasilPeramalanExport.php`.
+- [ ] **C13.** Detail resep: tombol "Ubah resep" hanya tampil untuk Admin dan Produksi.
+  Berkas: `produksi/bom/show.blade.php`. Selesai bila: Pimpinan tidak melihat tombol yang berujung 403.
+
+### D. Masukan UX ringan
+
+- [ ] **D1.** Waktu Tunggu: Admin dan Produksi melihat keterangan bahwa perhitungan dijalankan Pimpinan, bukan halaman kosong.
+  Berkas: `peramalan/waktu-tunggu/index.blade.php`.
+- [ ] **D2.** Waktu Tunggu: tampil "tidak perlu beli bahan" bila waktu beli bahan 0.
+  Berkas: `peramalan/waktu-tunggu/index.blade.php`.
+- [ ] **D3.** Target Produksi: tampil "tidak perlu beli bahan" bila waktu beli bahan 0.
+  Berkas: `peramalan/target/index.blade.php`.
+- [ ] **D4.** Waktu Tunggu: peringatan bila tanggal mulai produksi sudah lewat dari hari ini.
+  Berkas: `peramalan/waktu-tunggu/index.blade.php`.
+- [ ] **D5.** Target Produksi: peringatan bila tanggal mulai produksi sudah lewat dari hari ini.
+  Berkas: `peramalan/target/index.blade.php`.
+
+### E. Butuh keputusan
+
+- [ ] **E1.** ARIMA tanpa konstanta bila d ≥ 1, sesuai kebiasaan Box-Jenkins dan bawaan statsmodels. Memperbaiki prakiraan simulasi yang meledak, tetapi hasil peramalan dan simulasi berubah.
+- [ ] **E2.** (Opsional) Safety stock memakai satuan hari yang seragam.
+- [ ] **E3.** (Opsional) Pesan validasi dalam Bahasa Indonesia.
+- [ ] **E4.** (Opsional) MAPE ditulis dengan koma.
+- [ ] **E5.** (Opsional) Nilai penjualan di dashboard disembunyikan dari Produksi dan Gudang.
+
+### F. Penutup
+
+- [ ] **F1.** Seluruh test lolos.
+- [ ] **F2.** QA ulang singkat untuk butir A sampai D.
+- [ ] **F3.** Perbarui PRD, lalu commit dan push.
+- [ ] **F4.** Perbarui user guide (T12).

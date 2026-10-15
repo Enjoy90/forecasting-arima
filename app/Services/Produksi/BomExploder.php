@@ -17,10 +17,12 @@ class BomExploder
 {
     /**
      * Selain bahan baku, hasilnya memuat kebutuhan barang setengah jadi
-     * (kepala, handle, rakitan, ...) dan "langkah": setiap resep yang dilewati
-     * beserta resep induknya, dipakai LeadTimeCalculator mencari jalur kritis.
+     * (kepala, handle, rakitan, ...) dan "langkah": setiap kemunculan resep di
+     * pohon BOM sebagai simpul tersendiri, dengan indeks simpul induk dan
+     * kedalamannya (barang jadi = 0). Barang yang dipakai dua induk muncul dua
+     * kali, sehingga LeadTimeCalculator bisa menelusuri setiap jalur.
      *
-     * @return array{bahan_baku: array<int, array{barang_id: int, jumlah: float, satuan: ?string, tahapan_id: int}>, tahapan: array<int, array{tahapan_id: int, jumlah: float}>, setengah_jadi: array<int, array{barang_id: int, jumlah: float}>, langkah: array<int, array{barang_id: int, tahapan_id: int, jumlah: float, induk_barang_id: ?int}>}
+     * @return array{bahan_baku: array<int, array{barang_id: int, jumlah: float, satuan: ?string, tahapan_id: int}>, tahapan: array<int, array{tahapan_id: int, jumlah: float}>, setengah_jadi: array<int, array{barang_id: int, jumlah: float}>, langkah: array<int, array{barang_id: int, tahapan_id: int, jumlah: float, induk: ?int, kedalaman: int}>}
      */
     public function ledakkan(Barang $barang, float $jumlahTarget): array
     {
@@ -31,7 +33,7 @@ class BomExploder
         $setengahJadi = [];
         $langkah = [];
 
-        $this->jelajahi($barang, $jumlahTarget, $bahanBaku, $satuanBahan, $tahapanBahan, $tahapan, [], $setengahJadi, $langkah, null);
+        $this->jelajahi($barang, $jumlahTarget, $bahanBaku, $satuanBahan, $tahapanBahan, $tahapan, [], $setengahJadi, $langkah, null, 0);
 
         $daftarBahanBaku = [];
         foreach ($bahanBaku as $barangId => $jumlah) {
@@ -57,7 +59,7 @@ class BomExploder
             'bahan_baku' => $daftarBahanBaku,
             'tahapan' => $daftarTahapan,
             'setengah_jadi' => $daftarSetengahJadi,
-            'langkah' => array_values($langkah),
+            'langkah' => $langkah,
         ];
     }
 
@@ -69,9 +71,9 @@ class BomExploder
      * @param  array<int, bool>  $jalur  barang_id yang sedang dieksplorasi di jalur rekursi saat ini,
      *                                   dipakai mendeteksi BOM berputar (mis. A butuh B, B butuh A lagi)
      * @param  array<int, float>  $setengahJadi
-     * @param  array<int, array{barang_id: int, tahapan_id: int, jumlah: float, induk_barang_id: ?int}>  $langkah
+     * @param  array<int, array{barang_id: int, tahapan_id: int, jumlah: float, induk: ?int, kedalaman: int}>  $langkah
      */
-    private function jelajahi(Barang $barang, float $jumlah, array &$bahanBaku, array &$satuanBahan, array &$tahapanBahan, array &$tahapan, array $jalur, array &$setengahJadi, array &$langkah, ?int $indukBarangId): void
+    private function jelajahi(Barang $barang, float $jumlah, array &$bahanBaku, array &$satuanBahan, array &$tahapanBahan, array &$tahapan, array $jalur, array &$setengahJadi, array &$langkah, ?int $induk, int $kedalaman): void
     {
         if (isset($jalur[$barang->id])) {
             throw new RuntimeException("BOM berputar terdeteksi: {$barang->kode_barang} ({$barang->nama_barang}) menjadi komponen dari jalur produksinya sendiri.");
@@ -85,18 +87,14 @@ class BomExploder
 
         $tahapan[$bom->tahapan_id] = ($tahapan[$bom->tahapan_id] ?? 0.0) + $jumlah;
 
-        // Satu barang bisa dipakai di beberapa cabang (mis. handle untuk dua
-        // produk); jumlahnya diakumulasi pada satu langkah per barang.
-        if (isset($langkah[$barang->id])) {
-            $langkah[$barang->id]['jumlah'] += $jumlah;
-        } else {
-            $langkah[$barang->id] = [
-                'barang_id' => $barang->id,
-                'tahapan_id' => $bom->tahapan_id,
-                'jumlah' => $jumlah,
-                'induk_barang_id' => $indukBarangId,
-            ];
-        }
+        $indeks = count($langkah);
+        $langkah[] = [
+            'barang_id' => $barang->id,
+            'tahapan_id' => $bom->tahapan_id,
+            'jumlah' => $jumlah,
+            'induk' => $induk,
+            'kedalaman' => $kedalaman,
+        ];
 
         foreach ($bom->kebutuhanUntuk($jumlah) as $komponen) {
             $komponenBarang = Barang::findOrFail($komponen['barang_id']);
@@ -110,7 +108,7 @@ class BomExploder
             }
 
             $setengahJadi[$komponen['barang_id']] = ($setengahJadi[$komponen['barang_id']] ?? 0.0) + $komponen['jumlah'];
-            $this->jelajahi($komponenBarang, $komponen['jumlah'], $bahanBaku, $satuanBahan, $tahapanBahan, $tahapan, $jalur, $setengahJadi, $langkah, $barang->id);
+            $this->jelajahi($komponenBarang, $komponen['jumlah'], $bahanBaku, $satuanBahan, $tahapanBahan, $tahapan, $jalur, $setengahJadi, $langkah, $indeks, $kedalaman + 1);
         }
     }
 }

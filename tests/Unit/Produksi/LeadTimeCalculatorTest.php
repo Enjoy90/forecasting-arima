@@ -236,4 +236,161 @@ class LeadTimeCalculatorTest extends TestCase
 
         $this->assertGreaterThan($sendiri['lead_time_produksi_hari'], $bersama['lead_time_produksi_hari']);
     }
+
+    // ------------------------------------------------------------------
+    // Hasil QA 15 Oktober 2026 (docs/07 bagian 12, tahap A dan B)
+    // ------------------------------------------------------------------
+
+    private int $nomorResep = 0;
+
+    private function tahap(float $waktu, float $kapasitas): TahapanProduksi
+    {
+        return TahapanProduksi::factory()->create(['waktu_proses_hari' => $waktu, 'kapasitas_per_hari' => $kapasitas]);
+    }
+
+    /**
+     * @param  array<int, array{0: Barang, 1: float}>  $komponen
+     */
+    private function resep(Barang $hasil, TahapanProduksi $tahapan, array $komponen): void
+    {
+        $bom = Bom::create([
+            'kode_bom' => 'BOM-QA'.(++$this->nomorResep), 'nama_bom' => 'Resep QA', 'barang_id' => $hasil->id,
+            'tahapan_id' => $tahapan->id, 'jumlah_output' => 1, 'is_aktif' => true,
+        ]);
+        foreach ($komponen as [$barang, $jumlah]) {
+            $bom->detail()->create(['barang_id' => $barang->id, 'jumlah_kebutuhan' => $jumlah, 'persen_susut' => 0, 'satuan' => 'Pcs']);
+        }
+    }
+
+    private function bahan(float $stok, int $leadTime): Barang
+    {
+        return Barang::factory()->create(['stok_tersedia' => $stok, 'lead_time_hari' => $leadTime]);
+    }
+
+    public function test_bahan_produk_lain_tidak_menunda_produk_utama(): void
+    {
+        // [I] A memakai bahan yang cukup, B memakai bahan kosong 14 hari.
+        $tahap = $this->tahap(1, 1000);
+        $produkA = Barang::factory()->barangJadi()->create();
+        $produkB = Barang::factory()->barangJadi()->create();
+        $this->resep($produkA, $tahap, [[$this->bahan(1000, 7), 1]]);
+        $this->resep($produkB, $tahap, [[$this->bahan(0, 14), 1]]);
+
+        $hasilA = $this->calculator->hitung($produkA, 10, null, [$produkB->id => 10]);
+        $hasilB = $this->calculator->hitung($produkB, 10, null, [$produkA->id => 10]);
+
+        $this->assertEqualsWithDelta(0.0, $hasilA['lead_time_pembelian_hari'], 1e-9);
+        $this->assertSame([], $hasilA['bahan_kurang']);
+        $this->assertEqualsWithDelta(14.0, $hasilB['lead_time_pembelian_hari'], 1e-9);
+    }
+
+    public function test_bahan_bersama_tetap_dihitung_dari_kebutuhan_semua_produk(): void
+    {
+        // Stok 15 cukup untuk A (10) saja, tetapi tidak untuk A + B (20).
+        $tahap = $this->tahap(1, 1000);
+        $bersama = $this->bahan(15, 9);
+        $produkA = Barang::factory()->barangJadi()->create();
+        $produkB = Barang::factory()->barangJadi()->create();
+        $this->resep($produkA, $tahap, [[$bersama, 1]]);
+        $this->resep($produkB, $tahap, [[$bersama, 1]]);
+
+        $sendiri = $this->calculator->hitung($produkA, 10);
+        $denganB = $this->calculator->hitung($produkA, 10, null, [$produkB->id => 10]);
+
+        $this->assertEqualsWithDelta(0.0, $sendiri['lead_time_pembelian_hari'], 1e-9);
+        $this->assertEqualsWithDelta(9.0, $denganB['lead_time_pembelian_hari'], 1e-9);
+    }
+
+    public function test_jalur_kritis_produk_lain_tidak_dipakai_produk_utama(): void
+    {
+        // [D] produk lain punya tahap 10 hari, tetapi hanya memakai kapasitas.
+        $produkA = Barang::factory()->barangJadi()->create();
+        $produkX = Barang::factory()->barangJadi()->create();
+        $this->resep($produkA, $this->tahap(1, 1000), [[$this->bahan(1000, 5), 1]]);
+        $this->resep($produkX, $this->tahap(10, 1000), [[$this->bahan(0, 3), 1]]);
+
+        $hasil = $this->calculator->hitung($produkA, 2, null, [$produkX->id => 1]);
+        $nol = $this->calculator->hitung($produkA, 0, null, [$produkX->id => 1]);
+
+        $this->assertEqualsWithDelta(1.0, $hasil['lead_time_produksi_hari'], 1e-9);
+        $this->assertEqualsWithDelta(0.0, $nol['lead_time_produksi_hari'], 1e-9);
+        $this->assertEqualsWithDelta(0.0, $nol['lead_time_pembelian_hari'], 1e-9);
+    }
+
+    public function test_barang_dengan_dua_induk_tetap_menghitung_jalur_terpanjang(): void
+    {
+        // [B] P butuh A (1 hari) dan B (5 hari); A dan B sama-sama butuh C (1 hari).
+        $p = Barang::factory()->barangJadi()->create();
+        $a = Barang::factory()->setengahJadi()->create();
+        $b = Barang::factory()->setengahJadi()->create();
+        $c = Barang::factory()->setengahJadi()->create();
+        $this->resep($c, $this->tahap(1, 1000), [[$this->bahan(1000, 0), 1]]);
+        $this->resep($a, $this->tahap(1, 1000), [[$c, 1]]);
+        $this->resep($b, $this->tahap(5, 1000), [[$c, 1]]);
+        $this->resep($p, $this->tahap(1, 1000), [[$a, 1], [$b, 1]]);
+
+        $hasil = $this->calculator->hitung($p, 10);
+
+        $this->assertEqualsWithDelta(7.0, $hasil['jalur_kritis_hari'], 1e-9);
+        $this->assertEqualsWithDelta(7.0, $hasil['lead_time_produksi_hari'], 1e-9);
+    }
+
+    /**
+     * [C] Q (1 hari, kapasitas 500) butuh F (1 hari, 1.000) dan S (1 hari, 100), 500 unit.
+     * Cabang S tidak bisa tumpang tindih (100 < 500) sehingga menentukan: 2 + (5 - 1) = 6.
+     */
+    private function cabangSamaPanjang(bool $sLebihDulu): Barang
+    {
+        $q = Barang::factory()->barangJadi()->create();
+        $buat = function (float $kapasitas): Barang {
+            $barang = Barang::factory()->setengahJadi()->create();
+            $this->resep($barang, $this->tahap(1, $kapasitas), [[$this->bahan(100000, 0), 1]]);
+
+            return $barang;
+        };
+        if ($sLebihDulu) {
+            $s = $buat(100);
+            $f = $buat(1000);
+        } else {
+            $f = $buat(1000);
+            $s = $buat(100);
+        }
+        $this->resep($q, $this->tahap(1, 500), [[$f, 1], [$s, 1]]);
+
+        return $q;
+    }
+
+    public function test_hasil_tidak_bergantung_urutan_cabang_yang_sama_panjang(): void
+    {
+        $hasilF = $this->calculator->hitung($this->cabangSamaPanjang(false), 500);
+        $hasilS = $this->calculator->hitung($this->cabangSamaPanjang(true), 500);
+
+        $this->assertEqualsWithDelta(6.0, $hasilF['lead_time_produksi_hari'], 1e-9);
+        $this->assertEqualsWithDelta(6.0, $hasilS['lead_time_produksi_hari'], 1e-9);
+    }
+
+    public function test_kapasitas_tetap_dihitung_bila_semua_waktu_proses_nol(): void
+    {
+        // [G] satu tahap 0 hari, kapasitas 10, pesanan 1.000 -> 0 + (100 - 1) = 99.
+        $p = Barang::factory()->barangJadi()->create();
+        $this->resep($p, $this->tahap(0, 10), [[$this->bahan(100000, 0), 1]]);
+
+        $this->assertEqualsWithDelta(99.0, $this->calculator->hitung($p, 1000)['lead_time_produksi_hari'], 1e-9);
+    }
+
+    public function test_tahapan_sama_di_dua_tingkat_tidak_dijumlahkan_untuk_tumpang_tindih(): void
+    {
+        // [F] G1 butuh G2, keduanya di tahap yang sama (1 hari, kapasitas 100), pesanan 60.
+        // Per tingkat 60 < 100 jadi tidak tumpang tindih; beban tahap 120 -> 2 hari: 2 + (2 - 1) = 3.
+        $tahap = $this->tahap(1, 100);
+        $g1 = Barang::factory()->barangJadi()->create();
+        $g2 = Barang::factory()->setengahJadi()->create();
+        $this->resep($g2, $tahap, [[$this->bahan(100000, 0), 1]]);
+        $this->resep($g1, $tahap, [[$g2, 1]]);
+
+        $hasil = $this->calculator->hitung($g1, 60);
+
+        $this->assertSame(0, $hasil['tumpang_tindih_hari']);
+        $this->assertEqualsWithDelta(3.0, $hasil['lead_time_produksi_hari'], 1e-9);
+    }
 }

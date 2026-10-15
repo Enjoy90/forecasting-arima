@@ -202,11 +202,14 @@ flowchart LR
 ```
 Hari tahap-i   = CEIL( jumlah di tahap-i / kapasitas_per_hari_i )     ; kapasitas gabungan semua produk
 Jalur kritis   = jumlah waktu_proses terbesar dari daun BOM sampai barang jadi
-Tumpang tindih = jumlah sambungan di jalur kritis yang boleh mulai di hari yang sama, yaitu bila
-                 kapasitas tahap sebelumnya >= kapasitas tahap ini DAN jumlah di tahap ini >= kapasitasnya
+Tumpang tindih = jumlah sambungan di jalur yang boleh mulai di hari yang sama, yaitu bila
+                 kapasitas tahap sebelumnya >= kapasitas tahap ini DAN jumlah di tahap ini
+                 (per tingkat pohon resep, semua produk) >= kapasitasnya
+                 ; jalur kritis = jalur dengan (jumlah waktu_proses - tumpang tindih) terbesar
 
 L_produksi = Jalur kritis + ( MAX(Hari tahap-i) - 1 ) - Tumpang tindih      ; hari kerja
-L_beli     = MAX( lead_time_hari ) dari bahan baku yang kebutuhannya melebihi stok, 0 bila semua cukup
+L_beli     = MAX( lead_time_hari ) dari bahan baku produk yang direncanakan yang total kebutuhannya
+             (semua produk di periode itu) melebihi stok, 0 bila semua cukup
 L_total    = L_beli + L_produksi
 
 Tanggal mulai produksi = awal periode penjualan - L_produksi (hari kerja, Senin sampai Jumat)
@@ -220,6 +223,8 @@ Contoh dengan data pabrik (cetak 1.200, handle 1.200, coating 780 pcs per hari, 
 | 2 dz | 3 + (1 - 1) - 0 | 3 hari |
 | 56 dz (672 pcs) | 3 + (1 - 1) - 0, karena 672 < 780 coating mulai hari 2 | 3 hari |
 | 1.000 dz (12.000 pcs) | 3 + (16 - 1) - 1, coating terlama 16 hari dan mulai di hari yang sama dengan cetak | 17 hari |
+
+Produk lain di periode yang sama hanya ikut memakai kapasitas tahapan; jalur kritis dan bahan yang harus dibeli diambil dari produk yang direncanakan.
 
 Simulasi data masa lalu (bab 7) memakai `L_beli` penuh tanpa pemeriksaan stok, karena stok bahan pada masa itu tidak diketahui.
 
